@@ -1,6 +1,8 @@
 # fio 测试说明
 
-GitHub Pages 报告页面：`https://edwardtoday.github.io/fio-tests/`（首页为 `index.html`，内容与 `fio-report.html` 一致）。
+GitHub Pages 报告页面：`https://edwardtoday.github.io/fio-tests/`（首页为 `index.html`）。
+
+测试结果 Markdown：`results/`（`results/fio-test-*.md`）。
 
 ## macOS 与 Linux 手动测试命令
 
