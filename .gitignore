@@ -2,7 +2,8 @@
 
 # fio temp outputs (do not commit)
 fio-test.bin
-fio-iops.log
+fio-randread.log
+fio-randwrite.log
 fio-seq-read.log
 fio-seq-write.log
 fio-qd1.log

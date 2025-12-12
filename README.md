@@ -22,7 +22,8 @@ GitHub Pages 报告页面：`https://edwardtoday.github.io/fio-tests/`（首页�
 
 仓库提供 `run-fio.sh`，按平台自动选择 `posixaio/libaio`，输出日志：
 
-- `fio-iops.log`
+- `fio-randread.log`
+- `fio-randwrite.log`
 - `fio-seq-read.log`
 - `fio-seq-write.log`
 
