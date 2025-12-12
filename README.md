@@ -36,6 +36,12 @@ Amazon Linux 1 (AL AMI 2018.03) 如遇 `curl: (1) Protocol "https" not supported
 curl -fsSL http://us-east-1.linodeobjects.com/sansi-share/2025/run-fio.sh | bash -s -- .
 ```
 
+如需继续使用 HTTPS，可先升级/安装带 TLS 的 curl（是否可用取决于系统仓库版本）：
+
+```sh
+sudo yum install -y curl nss ca-certificates || sudo yum update -y curl
+```
+
 ## macOS 与 Linux 手动测试命令（可选）
 
 - macOS：`--ioengine=posixaio`
