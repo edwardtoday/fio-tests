@@ -2,7 +2,7 @@
 
 GitHub Pages 报告页面：`https://edwardtoday.github.io/fio-tests/`（首页为 `index.html`）。
 
-测试结果 Markdown：`results/`（`results/fio-test-*.md`）。
+测试结果 Markdown：`results/`（`results/*.md`）。
 
 ## macOS 与 Linux 手动测试命令
 
