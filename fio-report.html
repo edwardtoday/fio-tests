@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>fio 测试汇总</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 24px; color: #1f2933; }
+    h1 { margin-bottom: 8px; }
+    .subtitle { color: #52606d; margin-bottom: 24px; }
+    table { border-collapse: collapse; width: 100%; margin: 24px 0; font-size: 14px; }
+    th, td { border: 1px solid #d9e2ec; padding: 8px 10px; text-align: right; }
+    th:first-child, td:first-child { text-align: left; }
+    th { background: #f0f4f8; cursor: pointer; user-select: none; }
+    .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
+    canvas { background: #fff; border: 1px solid #e4e7eb; padding: 12px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+  </style>
+</head>
+<body>
+  <h1>fio 测试汇总</h1>
+  <div class="subtitle">随机读写展示 IOPS 与 MiB/s，顺序读写展示吞吐 (MiB/s)。数据来自仓库中的 fio 测试日志。</div>
+
+  <table id="results">
+    <thead>
+      <tr>
+        <th data-key="device">设备</th>
+        <th data-key="rand_read_iops">随机读 IOPS</th>
+        <th data-key="rand_read_bw_mib">随机读 MiB/s</th>
+        <th data-key="rand_write_iops">随机写 IOPS</th>
+        <th data-key="rand_write_bw_mib">随机写 MiB/s</th>
+        <th data-key="seq_read_mib_s">顺序读 MiB/s</th>
+        <th data-key="seq_write_mib_s">顺序写 MiB/s</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="charts">
+    <canvas id="bwAll"></canvas>
+  </div>
+
+<script>
+const data = [
+  {
+    "device": "Lexar-Silver-Plus-64G",
+    "rand_read_iops": 961.0,
+    "rand_read_bw_mib": 3.7578125,
+    "rand_write_iops": 967.0,
+    "rand_write_bw_mib": 3.779296875,
+    "seq_read_mib_s": 87.5,
+    "seq_write_mib_s": 69.5
+  },
+  {
+    "device": "Linode-16GB",
+    "rand_read_iops": 43700.0,
+    "rand_read_bw_mib": 171.0,
+    "rand_write_iops": 43700.0,
+    "rand_write_bw_mib": 171.0,
+    "seq_read_mib_s": 8617.0,
+    "seq_write_mib_s": 6068.0
+  },
+  {
+    "device": "Linode-2GB",
+    "rand_read_iops": 37900.0,
+    "rand_read_bw_mib": 148.0,
+    "rand_write_iops": 37800.0,
+    "rand_write_bw_mib": 148.0,
+    "seq_read_mib_s": 7439.0,
+    "seq_write_mib_s": 5314.0
+  },
+  {
+    "device": "Linode-32GB",
+    "rand_read_iops": 58300.0,
+    "rand_read_bw_mib": 228.0,
+    "rand_write_iops": 58300.0,
+    "rand_write_bw_mib": 228.0,
+    "seq_read_mib_s": 7134.0,
+    "seq_write_mib_s": 5269.0
+  },
+  {
+    "device": "Linode-4GB",
+    "rand_read_iops": 40500.0,
+    "rand_read_bw_mib": 158.0,
+    "rand_write_iops": 40400.0,
+    "rand_write_bw_mib": 158.0,
+    "seq_read_mib_s": 5878.0,
+    "seq_write_mib_s": 6068.0
+  },
+  {
+    "device": "Linode-8GB-cn-north-1",
+    "rand_read_iops": 1512.0,
+    "rand_read_bw_mib": 5.90625,
+    "rand_write_iops": 1511.0,
+    "rand_write_bw_mib": 5.90625,
+    "seq_read_mib_s": 126.0,
+    "seq_write_mib_s": 125.0
+  },
+  {
+    "device": "Linode-8GB",
+    "rand_read_iops": 41300.0,
+    "rand_read_bw_mib": 161.0,
+    "rand_write_iops": 41300.0,
+    "rand_write_bw_mib": 161.0,
+    "seq_read_mib_s": 5836.0,
+    "seq_write_mib_s": 6396.0
+  },
+  {
+    "device": "MBP14-M1Max-1TB",
+    "rand_read_iops": 23400.0,
+    "rand_read_bw_mib": 91.4,
+    "rand_write_iops": 23400.0,
+    "rand_write_bw_mib": 91.4,
+    "seq_read_mib_s": 4678.0,
+    "seq_write_mib_s": 3028.0
+  },
+  {
+    "device": "ST2000DL003-9VT166",
+    "rand_read_iops": 543.0,
+    "rand_read_bw_mib": 2.1240234375,
+    "rand_write_iops": 547.0,
+    "rand_write_bw_mib": 2.1376953125,
+    "seq_read_mib_s": 112.0,
+    "seq_write_mib_s": 70.0
+  },
+  {
+    "device": "ST3500418AS-with-ssd-cache",
+    "rand_read_iops": 527.0,
+    "rand_read_bw_mib": 2.0595703125,
+    "rand_write_iops": 530.0,
+    "rand_write_bw_mib": 2.0712890625,
+    "seq_read_mib_s": 112.0,
+    "seq_write_mib_s": 92.1
+  },
+  {
+    "device": "ST3500418AS",
+    "rand_read_iops": 684.0,
+    "rand_read_bw_mib": 2.6728515625,
+    "rand_write_iops": 686.0,
+    "rand_write_bw_mib": 2.681640625,
+    "seq_read_mib_s": 111.0,
+    "seq_write_mib_s": 91.9
+  },
+  {
+    "device": "ST4000DM000-1F2168-btrfs",
+    "rand_read_iops": 599.0,
+    "rand_read_bw_mib": 2.3408203125,
+    "rand_write_iops": 602.0,
+    "rand_write_bw_mib": 2.353515625,
+    "seq_read_mib_s": 111.0,
+    "seq_write_mib_s": 90.9
+  },
+  {
+    "device": "ST4000DM000-1F2168-ext4-with-ssd-cache",
+    "rand_read_iops": 482.0,
+    "rand_read_bw_mib": 1.88671875,
+    "rand_write_iops": 485.0,
+    "rand_write_bw_mib": 1.8955078125,
+    "seq_read_mib_s": 112.0,
+    "seq_write_mib_s": 91.4
+  },
+  {
+    "device": "ST4000DM000-1F2168-ext4",
+    "rand_read_iops": 516.0,
+    "rand_read_bw_mib": 2.017578125,
+    "rand_write_iops": 519.0,
+    "rand_write_bw_mib": 2.0302734375,
+    "seq_read_mib_s": 112.0,
+    "seq_write_mib_s": 97.3
+  },
+  {
+    "device": "Samsung-T7-1TB",
+    "rand_read_iops": 5363.0,
+    "rand_read_bw_mib": 20.9,
+    "rand_write_iops": 5374.0,
+    "rand_write_bw_mib": 21.0,
+    "seq_read_mib_s": 285.0,
+    "seq_write_mib_s": 478.0
+  },
+  {
+    "device": "Sandisk-High-Endurance-64G",
+    "rand_read_iops": 380.0,
+    "rand_read_bw_mib": 1.484375,
+    "rand_write_iops": 382.0,
+    "rand_write_bw_mib": 1.49609375,
+    "seq_read_mib_s": 49.3,
+    "seq_write_mib_s": 68.6
+  },
+  {
+    "device": "TiPlus7100-2TB-USB10G",
+    "rand_read_iops": 7875.0,
+    "rand_read_bw_mib": 30.8,
+    "rand_write_iops": 7885.0,
+    "rand_write_bw_mib": 30.8,
+    "seq_read_mib_s": 861.0,
+    "seq_write_mib_s": 919.0
+  },
+  {
+    "device": "UCS-100-1TB",
+    "rand_read_iops": 61900.0,
+    "rand_read_bw_mib": 242.0,
+    "rand_write_iops": 61800.0,
+    "rand_write_bw_mib": 241.0,
+    "seq_read_mib_s": 354.0,
+    "seq_write_mib_s": 2116.0
+  },
+  {
+    "device": "UCS-500-4TB",
+    "rand_read_iops": 223000.0,
+    "rand_read_bw_mib": 871.0,
+    "rand_write_iops": 223000.0,
+    "rand_write_bw_mib": 871.0,
+    "seq_read_mib_s": 1991.0,
+    "seq_write_mib_s": 2509.0
+  },
+  {
+    "device": "r740-5ssd-raid5",
+    "rand_read_iops": 21900.0,
+    "rand_read_bw_mib": 85.5,
+    "rand_write_iops": 21900.0,
+    "rand_write_bw_mib": 85.5,
+    "seq_read_mib_s": 5689.0,
+    "seq_write_mib_s": 1825.0
+  },
+  {
+    "device": "t2.micro-cn-north-1",
+    "rand_read_iops": 1543.0,
+    "rand_read_bw_mib": 5.90625,
+    "rand_write_iops": 1542.0,
+    "rand_write_bw_mib": 5.90625,
+    "seq_read_mib_s": 61.6,
+    "seq_write_mib_s": 61.6
+  },
+  {
+    "device": "t3.medium-cn-north-1",
+    "rand_read_iops": 1512.0,
+    "rand_read_bw_mib": 5.90625,
+    "rand_write_iops": 1511.0,
+    "rand_write_bw_mib": 5.90625,
+    "seq_read_mib_s": 126.0,
+    "seq_write_mib_s": 125.0
+  },
+  {
+    "device": "t3.micro-cn-north-1",
+    "rand_read_iops": 1514.0,
+    "rand_read_bw_mib": 5.91455078125,
+    "rand_write_iops": 1510.0,
+    "rand_write_bw_mib": 5.900390625,
+    "seq_read_mib_s": 126.3,
+    "seq_write_mib_s": 125.6
+  },
+  {
+    "device": "c8g.2xlarge-cn-north-1",
+    "rand_read_iops": 1500.0,
+    "rand_read_bw_mib": 5.8671875,
+    "rand_write_iops": 1500.0,
+    "rand_write_bw_mib": 5.8662109375,
+    "seq_read_mib_s": 126.0,
+    "seq_write_mib_s": 125.0
+  },
+  {
+    "device": "c6i.2xlarge-cn-north-1",
+    "rand_read_iops": 1508.0,
+    "rand_read_bw_mib": 5.8955078125,
+    "rand_write_iops": 1507.0,
+    "rand_write_bw_mib": 5.8916015625,
+    "seq_read_mib_s": 126.0,
+    "seq_write_mib_s": 125.0
+  },
+  {
+    "device": "g5.xlarge-cn-north-1",
+    "rand_read_iops": 1511.0,
+    "rand_read_bw_mib": 5.9052734375,
+    "rand_write_iops": 1511.0,
+    "rand_write_bw_mib": 5.904296875,
+    "seq_read_mib_s": 126.0,
+    "seq_write_mib_s": 125.0
+  },
+  {
+    "device": "Toshiba-Exceria-32G",
+    "rand_read_iops": 1.0,
+    "rand_read_bw_mib": 0.005462646484375,
+    "rand_write_iops": 1.0,
+    "rand_write_bw_mib": 0.0062274932861328125,
+    "seq_read_mib_s": 79.4,
+    "seq_write_mib_s": 13.1
+  }
+];
+Chart.register(ChartDataLabels);
+
+function fmt(val, digits=1) {
+  return (val === null || val === undefined) ? '-' : Number(val).toFixed(digits);
+}
+
+// 排序状态（默认顺序读 MiB/s 升序）
+let sortKey = 'seq_read_mib_s';
+let sortDir = 'asc';
+const headerCells = Array.from(document.querySelectorAll('#results thead th[data-key]'));
+const tbody = document.querySelector('#results tbody');
+
+function sortData(rows) {
+  return [...rows].sort((a, b) => {
+    const va = a[sortKey];
+    const vb = b[sortKey];
+    const na = va === null || va === undefined;
+    const nb = vb === null || vb === undefined;
+    if (na && nb) return 0;
+    if (na) return 1;
+    if (nb) return -1;
+    const bothNumbers = typeof va === 'number' && typeof vb === 'number';
+    if (bothNumbers) return sortDir === 'asc' ? va - vb : vb - va;
+    const cmp = String(va).localeCompare(String(vb), 'zh-Hans');
+    return sortDir === 'asc' ? cmp : -cmp;
+  });
+}
+
+function renderTable(sorted) {
+  tbody.innerHTML = '';
+  sorted.forEach(d => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${d.device}</td>
+      <td>${fmt(d.rand_read_iops,0)}</td>
+      <td>${fmt(d.rand_read_bw_mib,2)}</td>
+      <td>${fmt(d.rand_write_iops,0)}</td>
+      <td>${fmt(d.rand_write_bw_mib,2)}</td>
+      <td>${fmt(d.seq_read_mib_s,1)}</td>
+      <td>${fmt(d.seq_write_mib_s,1)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateHeaderIndicators() {
+  headerCells.forEach(th => {
+    const base = th.dataset.label || th.textContent.replace(/ [↑↓]$/, '');
+    th.dataset.label = base;
+    if (th.dataset.key === sortKey) {
+      th.textContent = `${base} ${sortDir === 'asc' ? '↑' : '↓'}`;
+    } else {
+      th.textContent = base;
+    }
+  });
+}
+
+// 横向分组柱状：每个设备四根柱子展示吞吐（MiB/s）
+const bwChart = new Chart(document.getElementById('bwAll').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: [],
+    datasets: [
+      { label: '随机读 MiB/s', backgroundColor: '#7c3aed', data: [] },
+      { label: '随机写 MiB/s', backgroundColor: '#f97316', data: [] },
+      { label: '顺序读 MiB/s', backgroundColor: '#0ea5e9', data: [] },
+      { label: '顺序写 MiB/s', backgroundColor: '#e11d48', data: [] }
+    ]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom' },
+      datalabels: {
+        color: '#111827',
+        anchor: 'end',
+        align: 'end',
+        offset: 4,
+        clip: false,
+        formatter: (v) => (v == null ? '' : v.toFixed(1))
+      }
+    },
+    scales: {
+      x: { beginAtZero: true },
+      y: { ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } }
+    }
+  }
+});
+
+function renderChart(sorted) {
+  bwChart.data.labels = sorted.map(d => d.device);
+  bwChart.data.datasets[0].data = sorted.map(d => d.rand_read_bw_mib);
+  bwChart.data.datasets[1].data = sorted.map(d => d.rand_write_bw_mib);
+  bwChart.data.datasets[2].data = sorted.map(d => d.seq_read_mib_s);
+  bwChart.data.datasets[3].data = sorted.map(d => d.seq_write_mib_s);
+  bwChart.update();
+}
+
+function renderAll() {
+  const sorted = sortData(data);
+  renderTable(sorted);
+  renderChart(sorted);
+  updateHeaderIndicators();
+}
+
+headerCells.forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.key;
+    if (sortKey === key) {
+      sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortKey = key;
+      sortDir = 'asc';
+    }
+    renderAll();
+  });
+});
+
+renderAll();
+</script>
+</body>
+</html>
