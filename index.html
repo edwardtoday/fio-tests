@@ -343,21 +343,26 @@ function updateHeaderIndicators() {
   });
 }
 
+const bwCanvas = document.getElementById('bwAll');
+const BW_DATASET_COUNT = 4;
+const BW_BAR_THICKNESS = 12; // 提高每组柱子的厚度，避免 data label 纵向挤在一起
+
 // 横向分组柱状：每个设备四根柱子展示吞吐（MiB/s）
-const bwChart = new Chart(document.getElementById('bwAll').getContext('2d'), {
+const bwChart = new Chart(bwCanvas.getContext('2d'), {
   type: 'bar',
   data: {
     labels: [],
     datasets: [
-      { label: '随机读 MiB/s', backgroundColor: '#7c3aed', data: [] },
-      { label: '随机写 MiB/s', backgroundColor: '#f97316', data: [] },
-      { label: '顺序读 MiB/s', backgroundColor: '#0ea5e9', data: [] },
-      { label: '顺序写 MiB/s', backgroundColor: '#e11d48', data: [] }
+      { label: '随机读 MiB/s', backgroundColor: '#7c3aed', data: [], barThickness: BW_BAR_THICKNESS, maxBarThickness: BW_BAR_THICKNESS },
+      { label: '随机写 MiB/s', backgroundColor: '#f97316', data: [], barThickness: BW_BAR_THICKNESS, maxBarThickness: BW_BAR_THICKNESS },
+      { label: '顺序读 MiB/s', backgroundColor: '#0ea5e9', data: [], barThickness: BW_BAR_THICKNESS, maxBarThickness: BW_BAR_THICKNESS },
+      { label: '顺序写 MiB/s', backgroundColor: '#e11d48', data: [], barThickness: BW_BAR_THICKNESS, maxBarThickness: BW_BAR_THICKNESS }
     ]
   },
   options: {
     indexAxis: 'y',
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { position: 'bottom' },
       datalabels: {
@@ -366,6 +371,7 @@ const bwChart = new Chart(document.getElementById('bwAll').getContext('2d'), {
         align: 'end',
         offset: 4,
         clip: false,
+        font: { size: 10 },
         formatter: (v) => (v == null ? '' : v.toFixed(1))
       }
     },
@@ -377,6 +383,11 @@ const bwChart = new Chart(document.getElementById('bwAll').getContext('2d'), {
 });
 
 function renderChart(sorted) {
+  // 按设备数量动态拉高画布，避免 data label 纵向重叠
+  const perDevice = BW_BAR_THICKNESS * BW_DATASET_COUNT + 18;
+  const height = 180 + sorted.length * perDevice;
+  bwCanvas.style.height = `${height}px`;
+
   bwChart.data.labels = sorted.map(d => d.device);
   bwChart.data.datasets[0].data = sorted.map(d => d.rand_read_bw_mib);
   bwChart.data.datasets[1].data = sorted.map(d => d.rand_write_bw_mib);
