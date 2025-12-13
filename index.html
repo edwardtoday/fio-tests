@@ -22,6 +22,46 @@
   <h1>fio 测试汇总</h1>
   <div class="subtitle">随机读写展示 IOPS 与 MiB/s，顺序读写展示吞吐 (MiB/s)。数据来自仓库中的 fio 测试日志。</div>
 
+  <div id="runsControls" style="display:none; margin: 16px 0; padding: 12px; border: 1px solid #e4e7eb; border-radius: 8px; background: #fff;">
+    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+      <label style="display:flex; gap:6px; align-items:center;">
+        <input type="checkbox" id="latestOnly" checked />
+        only show latest result for the same target
+      </label>
+
+      <label>op
+        <select id="opSelect">
+          <option value="read" selected>read</option>
+          <option value="write">write</option>
+        </select>
+      </label>
+
+      <label>metric
+        <select id="metricSelect">
+          <option value="bw_mib_s" selected>bw_mib_s</option>
+          <option value="iops">iops</option>
+          <option value="clat_p95_ms">clat_p95_ms</option>
+          <option value="clat_p99_ms">clat_p99_ms</option>
+        </select>
+      </label>
+
+      <label>rw <select id="rwSelect"></select></label>
+      <label>bs <select id="bsSelect"></select></label>
+      <label>qd <select id="qdSelect"></select></label>
+      <label>runtime_s <select id="runtimeSelect"></select></label>
+      <label>direct <select id="directSelect"></select></label>
+      <label>fdatasync <select id="fdatasyncSelect"></select></label>
+      <label>ioengine <select id="ioengineSelect"></select></label>
+      <label>rwmixread <select id="mixSelect"></select></label>
+      <label>size_policy <select id="sizePolicySelect"></select></label>
+
+      <label>case
+        <select id="caseSelect" style="min-width: 340px;"></select>
+      </label>
+    </div>
+    <div id="runsHint" style="margin-top: 10px; color:#52606d; font-size: 13px;"></div>
+  </div>
+
   <table id="results">
     <thead>
       <tr>
@@ -48,9 +88,7 @@ async function loadData() {
   const res = await fetch('results/data.json', { cache: 'no-store' });
   if (!res.ok) throw new Error(`failed to load results/data.json: ${res.status}`);
   const doc = await res.json();
-  if (Array.isArray(doc?.legacy_rows)) return doc.legacy_rows;
-  if (Array.isArray(doc)) return doc;
-  return [];
+  return doc;
 }
 
 Chart.register(ChartDataLabels);
@@ -59,11 +97,43 @@ function fmt(val, digits=1) {
   return (val === null || val === undefined) ? '-' : Number(val).toFixed(digits);
 }
 
-// 排序状态（默认顺序读 MiB/s 升序）
+function fmtLatencyMs(ms) {
+  if (ms === null || ms === undefined) return '-';
+  const v = Number(ms);
+  if (!Number.isFinite(v)) return '-';
+  if (v < 1) return `${Math.round(v * 1000)}µs`;
+  return `${v.toFixed(2)}ms`;
+}
+
+const runsControls = document.getElementById('runsControls');
+const runsHint = document.getElementById('runsHint');
+const tbody = document.querySelector('#results tbody');
+const theadRow = document.querySelector('#results thead tr');
+
+let viewMode = 'legacy'; // legacy|runs
 let sortKey = 'seq_read_mib_s';
 let sortDir = 'asc';
-const headerCells = Array.from(document.querySelectorAll('#results thead th[data-key]'));
-const tbody = document.querySelector('#results tbody');
+let headerCells = [];
+
+function setHeaders(headers) {
+  theadRow.innerHTML = headers.map(h => `<th data-key="${h.key}">${h.label}</th>`).join('');
+  headerCells = Array.from(document.querySelectorAll('#results thead th[data-key]'));
+}
+
+function bindSortHandlers() {
+  headerCells.forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.key;
+      if (sortKey === key) {
+        sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortKey = key;
+        sortDir = (key === 'device' || key === 'system' || key === 'timestamp') ? 'asc' : 'desc';
+      }
+      renderAll();
+    });
+  });
+}
 
 function sortData(rows) {
   return [...rows].sort((a, b) => {
@@ -85,14 +155,24 @@ function renderTable(sorted) {
   tbody.innerHTML = '';
   sorted.forEach(d => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${d.device}</td>
-      <td>${fmt(d.rand_read_iops,0)}</td>
-      <td>${fmt(d.rand_read_bw_mib,2)}</td>
-      <td>${fmt(d.rand_write_iops,0)}</td>
-      <td>${fmt(d.rand_write_bw_mib,2)}</td>
-      <td>${fmt(d.seq_read_mib_s,1)}</td>
-      <td>${fmt(d.seq_write_mib_s,1)}</td>`;
+    if (viewMode === 'legacy') {
+      tr.innerHTML = `
+        <td>${d.device}</td>
+        <td>${fmt(d.rand_read_iops,0)}</td>
+        <td>${fmt(d.rand_read_bw_mib,2)}</td>
+        <td>${fmt(d.rand_write_iops,0)}</td>
+        <td>${fmt(d.rand_write_bw_mib,2)}</td>
+        <td>${fmt(d.seq_read_mib_s,1)}</td>
+        <td>${fmt(d.seq_write_mib_s,1)}</td>`;
+    } else {
+      tr.innerHTML = `
+        <td>${d.system}</td>
+        <td>${d.timestamp}</td>
+        <td>${fmt(d.iops,0)}</td>
+        <td>${fmt(d.bw_mib_s,2)}</td>
+        <td>${fmtLatencyMs(d.clat_p95_ms)}</td>
+        <td>${fmtLatencyMs(d.clat_p99_ms)}</td>`;
+    }
     tbody.appendChild(tr);
   });
 }
@@ -110,43 +190,51 @@ function updateHeaderIndicators() {
 }
 
 const bwCanvas = document.getElementById('bwAll');
-const BW_DATASET_COUNT = 4;
+let bwChart = null;
+let BW_DATASET_COUNT = 4;
 const BW_BAR_THICKNESS = 12; // 提高每组柱子的厚度，避免 data label 纵向挤在一起
 
-// 横向分组柱状：每个设备四根柱子展示吞吐（MiB/s）
-const bwChart = new Chart(bwCanvas.getContext('2d'), {
-  type: 'bar',
-  data: {
-    labels: [],
-    datasets: [
-      { label: '随机读 MiB/s', backgroundColor: '#7c3aed', data: [], barThickness: BW_BAR_THICKNESS, maxBarThickness: BW_BAR_THICKNESS },
-      { label: '随机写 MiB/s', backgroundColor: '#f97316', data: [], barThickness: BW_BAR_THICKNESS, maxBarThickness: BW_BAR_THICKNESS },
-      { label: '顺序读 MiB/s', backgroundColor: '#0ea5e9', data: [], barThickness: BW_BAR_THICKNESS, maxBarThickness: BW_BAR_THICKNESS },
-      { label: '顺序写 MiB/s', backgroundColor: '#e11d48', data: [], barThickness: BW_BAR_THICKNESS, maxBarThickness: BW_BAR_THICKNESS }
-    ]
-  },
-  options: {
-    indexAxis: 'y',
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { position: 'bottom' },
-      datalabels: {
-        color: '#111827',
-        anchor: 'end',
-        align: 'end',
-        offset: 4,
-        clip: false,
-        font: { size: 10 },
-        formatter: (v) => (v == null ? '' : v.toFixed(1))
+function ensureChart(datasetCount, datasetLabels) {
+  if (bwChart && BW_DATASET_COUNT === datasetCount) return;
+
+  if (bwChart) bwChart.destroy();
+  BW_DATASET_COUNT = datasetCount;
+
+  const colors = ['#7c3aed', '#f97316', '#0ea5e9', '#e11d48', '#10b981', '#f59e0b'];
+  const datasets = datasetLabels.map((label, idx) => ({
+    label,
+    backgroundColor: colors[idx % colors.length],
+    data: [],
+    barThickness: BW_BAR_THICKNESS,
+    maxBarThickness: BW_BAR_THICKNESS
+  }));
+
+  bwChart = new Chart(bwCanvas.getContext('2d'), {
+    type: 'bar',
+    data: { labels: [], datasets },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' },
+        datalabels: {
+          color: '#111827',
+          anchor: 'end',
+          align: 'end',
+          offset: 4,
+          clip: false,
+          font: { size: 10 },
+          formatter: (v) => (v == null ? '' : Number(v).toFixed(2))
+        }
+      },
+      scales: {
+        x: { beginAtZero: true },
+        y: { ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } }
       }
-    },
-    scales: {
-      x: { beginAtZero: true },
-      y: { ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } }
     }
-  }
-});
+  });
+}
 
 function renderChart(sorted) {
   // 按设备数量动态拉高画布，避免 data label 纵向重叠
@@ -154,39 +242,247 @@ function renderChart(sorted) {
   const height = 180 + sorted.length * perDevice;
   bwCanvas.style.height = `${height}px`;
 
-  bwChart.data.labels = sorted.map(d => d.device);
-  bwChart.data.datasets[0].data = sorted.map(d => d.rand_read_bw_mib);
-  bwChart.data.datasets[1].data = sorted.map(d => d.rand_write_bw_mib);
-  bwChart.data.datasets[2].data = sorted.map(d => d.seq_read_mib_s);
-  bwChart.data.datasets[3].data = sorted.map(d => d.seq_write_mib_s);
+  if (viewMode === 'legacy') {
+    ensureChart(4, ['随机读 MiB/s', '随机写 MiB/s', '顺序读 MiB/s', '顺序写 MiB/s']);
+    bwChart.data.labels = sorted.map(d => d.device);
+    bwChart.data.datasets[0].data = sorted.map(d => d.rand_read_bw_mib);
+    bwChart.data.datasets[1].data = sorted.map(d => d.rand_write_bw_mib);
+    bwChart.data.datasets[2].data = sorted.map(d => d.seq_read_mib_s);
+    bwChart.data.datasets[3].data = sorted.map(d => d.seq_write_mib_s);
+  } else {
+    const metric = document.getElementById('metricSelect').value;
+    const label = `metric: ${metric}`;
+    ensureChart(1, [label]);
+    bwChart.data.labels = sorted.map(d => d.system);
+    bwChart.data.datasets[0].data = sorted.map(d => d[metric]);
+  }
   bwChart.update();
 }
 
+function uniqSorted(values) {
+  return Array.from(new Set(values.filter(v => v !== null && v !== undefined && v !== ''))).sort((a,b) => String(a).localeCompare(String(b)));
+}
+
+function setSelectOptions(select, values, allLabel='(any)') {
+  const current = select.value;
+  select.innerHTML = '';
+  const optAny = document.createElement('option');
+  optAny.value = '';
+  optAny.textContent = allLabel;
+  select.appendChild(optAny);
+  values.forEach(v => {
+    const o = document.createElement('option');
+    o.value = String(v);
+    o.textContent = String(v);
+    select.appendChild(o);
+  });
+  if ([...select.options].some(o => o.value === current)) {
+    select.value = current;
+  }
+}
+
+function caseLabel(sig) {
+  const rw = sig.rw;
+  const bs = sig.bs;
+  const qd = sig.qd;
+  const runtime = sig.runtime_s == null ? '-' : sig.runtime_s;
+  const mix = sig.rwmixread == null ? '' : ` mix${sig.rwmixread}`;
+  const direct = sig.direct ? 'direct' : 'buffered';
+  const fd = sig.fdatasync ? '+fdatasync' : '';
+  const sp = sig.size_policy?.mode || 'size';
+  return `${rw} ${bs} qd${qd} rt${runtime}s ${direct} ${sig.ioengine}${fd}${mix} ${sp}`;
+}
+
+function matchesFilter(sig, key, val) {
+  if (!val) return true;
+  const actual = sig[key];
+  if (actual == null) return false;
+  return String(actual) === String(val);
+}
+
+function buildRunsView(doc) {
+  const caseDefs = doc.case_defs || {};
+  const measurements = doc.measurements || [];
+
+  const rwSelect = document.getElementById('rwSelect');
+  const bsSelect = document.getElementById('bsSelect');
+  const qdSelect = document.getElementById('qdSelect');
+  const runtimeSelect = document.getElementById('runtimeSelect');
+  const directSelect = document.getElementById('directSelect');
+  const fdatasyncSelect = document.getElementById('fdatasyncSelect');
+  const ioengineSelect = document.getElementById('ioengineSelect');
+  const mixSelect = document.getElementById('mixSelect');
+  const sizePolicySelect = document.getElementById('sizePolicySelect');
+  const caseSelect = document.getElementById('caseSelect');
+
+  const sigs = Object.values(caseDefs);
+  setSelectOptions(rwSelect, uniqSorted(sigs.map(s => s.rw)));
+  setSelectOptions(bsSelect, uniqSorted(sigs.map(s => s.bs)));
+  setSelectOptions(qdSelect, uniqSorted(sigs.map(s => s.qd)));
+  setSelectOptions(runtimeSelect, uniqSorted(sigs.map(s => s.runtime_s)));
+  setSelectOptions(directSelect, uniqSorted(sigs.map(s => s.direct)));
+  setSelectOptions(fdatasyncSelect, uniqSorted(sigs.map(s => s.fdatasync)));
+  setSelectOptions(ioengineSelect, uniqSorted(sigs.map(s => s.ioengine)));
+  setSelectOptions(mixSelect, uniqSorted(sigs.map(s => s.rwmixread)));
+  setSelectOptions(sizePolicySelect, uniqSorted(sigs.map(s => s.size_policy?.mode)));
+
+  function rebuildCaseOptions() {
+    const rw = rwSelect.value;
+    const bs = bsSelect.value;
+    const qd = qdSelect.value;
+    const rt = runtimeSelect.value;
+    const direct = directSelect.value;
+    const fd = fdatasyncSelect.value;
+    const engine = ioengineSelect.value;
+    const mix = mixSelect.value;
+    const sp = sizePolicySelect.value;
+
+    const entries = Object.entries(caseDefs)
+      .filter(([_, sig]) =>
+        matchesFilter(sig, 'rw', rw) &&
+        matchesFilter(sig, 'bs', bs) &&
+        matchesFilter(sig, 'qd', qd) &&
+        matchesFilter(sig, 'runtime_s', rt) &&
+        matchesFilter(sig, 'direct', direct) &&
+        matchesFilter(sig, 'fdatasync', fd) &&
+        matchesFilter(sig, 'ioengine', engine) &&
+        matchesFilter(sig, 'rwmixread', mix) &&
+        (sp ? String(sig.size_policy?.mode || '') === String(sp) : true)
+      )
+      .map(([ck, sig]) => ({ case_key: ck, label: caseLabel(sig) }))
+      .sort((a,b) => a.label.localeCompare(b.label));
+
+    const current = caseSelect.value;
+    caseSelect.innerHTML = '';
+    entries.forEach(e => {
+      const o = document.createElement('option');
+      o.value = e.case_key;
+      o.textContent = e.label;
+      caseSelect.appendChild(o);
+    });
+    if ([...caseSelect.options].some(o => o.value === current)) {
+      caseSelect.value = current;
+    } else if (caseSelect.options.length > 0) {
+      caseSelect.value = caseSelect.options[0].value;
+    }
+  }
+
+  [rwSelect, bsSelect, qdSelect, runtimeSelect, directSelect, fdatasyncSelect, ioengineSelect, mixSelect, sizePolicySelect].forEach(sel => {
+    sel.addEventListener('change', () => {
+      rebuildCaseOptions();
+      renderAll();
+    });
+  });
+  caseSelect.addEventListener('change', renderAll);
+  document.getElementById('opSelect').addEventListener('change', renderAll);
+  document.getElementById('metricSelect').addEventListener('change', renderAll);
+  document.getElementById('latestOnly').addEventListener('change', renderAll);
+
+  rebuildCaseOptions();
+
+  return { caseDefs, measurements };
+}
+
+let runsDoc = null;
+let runsView = null;
+
+function buildRunsRows() {
+  const op = document.getElementById('opSelect').value;
+  const caseKey = document.getElementById('caseSelect').value;
+  const latestOnly = document.getElementById('latestOnly').checked;
+
+  if (!caseKey) return [];
+
+  const rows = runsView.measurements
+    .filter(m => m.case_key === caseKey && m.op === op)
+    .map(m => ({
+      system: m.system,
+      timestamp: m.timestamp,
+      run_id: m.run_id,
+      iops: m.iops,
+      bw_mib_s: m.bw_mib_s,
+      clat_p95_ms: m.clat_p95_ms,
+      clat_p99_ms: m.clat_p99_ms
+    }));
+
+  if (!latestOnly) return rows;
+
+  const best = new Map();
+  rows.forEach(r => {
+    const prev = best.get(r.system);
+    if (!prev || (r.timestamp > prev.timestamp) || (r.timestamp === prev.timestamp && r.run_id > prev.run_id)) {
+      best.set(r.system, r);
+    }
+  });
+  return Array.from(best.values());
+}
+
 function renderAll() {
-  const sorted = sortData(data);
+  const rows = (viewMode === 'legacy') ? data : buildRunsRows();
+  const sorted = sortData(rows);
   renderTable(sorted);
   renderChart(sorted);
   updateHeaderIndicators();
-}
 
-headerCells.forEach(th => {
-  th.addEventListener('click', () => {
-    const key = th.dataset.key;
-    if (sortKey === key) {
-      sortDir = sortDir === 'asc' ? 'desc' : 'asc';
-    } else {
-      sortKey = key;
-      sortDir = 'asc';
-    }
-    renderAll();
-  });
-});
+  if (viewMode === 'runs') {
+    const op = document.getElementById('opSelect').value;
+    const caseKey = document.getElementById('caseSelect').value;
+    const sig = runsView.caseDefs[caseKey];
+    runsHint.textContent = sig ? `case_key=${caseKey} | ${caseLabel(sig)} | matched systems=${sorted.length}` : `case_key=${caseKey} | matched systems=${sorted.length}`;
+  }
+}
 
 (async () => {
   try {
-    data = await loadData();
+    const doc = await loadData();
+    if (doc && Array.isArray(doc.measurements) && doc.measurements.length > 0) {
+      viewMode = 'runs';
+      runsDoc = doc;
+      runsControls.style.display = 'block';
+      sortKey = 'bw_mib_s';
+      sortDir = 'desc';
+      setHeaders([
+        { key: 'system', label: 'system' },
+        { key: 'timestamp', label: 'timestamp' },
+        { key: 'iops', label: 'iops' },
+        { key: 'bw_mib_s', label: 'bw_mib_s' },
+        { key: 'clat_p95_ms', label: 'clat_p95_ms' },
+        { key: 'clat_p99_ms', label: 'clat_p99_ms' }
+      ]);
+      bindSortHandlers();
+      runsView = buildRunsView(doc);
+      data = [];
+    } else {
+      viewMode = 'legacy';
+      runsControls.style.display = 'none';
+      sortKey = 'seq_read_mib_s';
+      sortDir = 'asc';
+      setHeaders([
+        { key: 'device', label: '设备' },
+        { key: 'rand_read_iops', label: '随机读 IOPS' },
+        { key: 'rand_read_bw_mib', label: '随机读 MiB/s' },
+        { key: 'rand_write_iops', label: '随机写 IOPS' },
+        { key: 'rand_write_bw_mib', label: '随机写 MiB/s' },
+        { key: 'seq_read_mib_s', label: '顺序读 MiB/s' },
+        { key: 'seq_write_mib_s', label: '顺序写 MiB/s' }
+      ]);
+      bindSortHandlers();
+      data = Array.isArray(doc?.legacy_rows) ? doc.legacy_rows : [];
+    }
   } catch (err) {
     console.error(err);
+    viewMode = 'legacy';
+    runsControls.style.display = 'none';
+    setHeaders([
+      { key: 'device', label: '设备' },
+      { key: 'rand_read_iops', label: '随机读 IOPS' },
+      { key: 'rand_read_bw_mib', label: '随机读 MiB/s' },
+      { key: 'rand_write_iops', label: '随机写 IOPS' },
+      { key: 'rand_write_bw_mib', label: '随机写 MiB/s' },
+      { key: 'seq_read_mib_s', label: '顺序读 MiB/s' },
+      { key: 'seq_write_mib_s', label: '顺序写 MiB/s' }
+    ]);
+    bindSortHandlers();
     data = [];
   }
   renderAll();
