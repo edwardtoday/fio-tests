@@ -168,7 +168,7 @@ def aggregate(runs_dir: str) -> Dict[str, Any]:
 
     return {
         "generated_at": utc_now_iso(),
-        "schema": "fio-tests/data/v1",
+        "schema": "fio-tests/data/v2",
         "runs_dir": os.path.relpath(runs_dir),
         "systems": list(systems.values()),
         "runs": run_rows,
@@ -191,6 +191,18 @@ def main() -> int:
     out_path = args.out
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
 
+    # Preserve legacy rows moved from index.html (if present).
+    legacy_rows = None
+    if os.path.exists(out_path):
+        try:
+            existing = load_json(out_path)
+            if isinstance(existing, dict) and isinstance(existing.get("legacy_rows"), list):
+                legacy_rows = existing.get("legacy_rows")
+        except Exception:
+            legacy_rows = None
+    if legacy_rows is not None:
+        data["legacy_rows"] = legacy_rows
+
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2, sort_keys=True)
         f.write("\n")
@@ -201,4 +213,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
