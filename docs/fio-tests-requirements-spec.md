@@ -64,6 +64,7 @@ profile 仅用于“选择要跑哪些 case 的快捷方式”，不参与横向
 
 说明：
 
+- 指标按 **op 维度** 记录：`read` / `write`（例如 `randrw` 会同时包含 read 与 write）。
 - 随机类（`randread/randwrite/randrw`）的延迟必须输出；顺序类也可输出但 UI 可默认隐藏。
 - 数据层统一使用 `ms` 浮点；展示层可对 `< 1ms` 自动格式化成 `µs`（仅显示，不改数据）。
 
@@ -86,6 +87,19 @@ profile 仅用于“选择要跑哪些 case 的快捷方式”，不参与横向
 - `time_based`（0/1）
 - `runtime_s`
 - `size_policy`（见下）
+
+#### case_key 生成规范（建议定案）
+
+- 输入：case 签名字段组成的对象（见上），使用 **canonical JSON**（UTF-8、key 排序、无多余空格）
+- 域分离前缀：`fio-tests/case/v1\0`
+- 算法：SHA‑256
+- 输出：小写 hex，取前 20 位（80 bit）
+
+伪代码：
+
+```
+case_key = sha256("fio-tests/case/v1\0" + canonical_json(case_sig)).hex_lower[0:20]
+```
 
 ### size_policy
 
@@ -184,4 +198,3 @@ run_id = timestamp_utc_compact + "_" + system_hash
 5) 将变更提交到 GitHub
    - 可选：直接 push main（省事）
    - 可选：开 PR + Action 校验（更安全）
-

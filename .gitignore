@@ -8,3 +8,6 @@ fio-seq-read.log
 fio-seq-write.log
 fio-qd1.log
 tmp-fio-*.log
+fio-*.fio.json
+fio-manifest-*.tsv
+fio-run-*.json

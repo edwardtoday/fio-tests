@@ -6,7 +6,11 @@ GitHub Pages 报告页面：`https://edwardtoday.github.io/fio-tests/`（首页�
 
 ## 一键脚本（推荐）
 
-仓库提供 `run-fio.sh`，按平台自动选择 `posixaio/libaio`，支持多套 profile，并输出 `fio-*.log` 到目标目录。
+仓库提供 `run-fio.sh`，按平台自动选择 `posixaio/libaio`，支持多套 profile，并输出 JSON 结果到目标目录：
+
+- `fio-*.fio.json`：每个 case 的 fio 原始 JSON 输出（用于提取 IOPS/MiB/s/p95/p99）
+- `fio-run-<run_id>.json`：归一化后的结构化结果（包含 `case_key`、指标与元信息）
+- `fio-manifest-<run_id>.tsv`：脚本内部的 case 清单（辅助调试）
 
 Profile：
 
@@ -25,6 +29,13 @@ curl -fsSL https://raw.githubusercontent.com/edwardtoday/fio-tests/refs/heads/ma
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/edwardtoday/fio-tests/refs/heads/main/run-fio.sh | sudo bash -s -- --profile quick .
+```
+
+可选：上传到 webhook（需要配置 `FIO_TESTS_WEBHOOK_URL`，可选 `FIO_TESTS_WEBHOOK_SECRET`）：
+
+```sh
+FIO_TESTS_WEBHOOK_URL='https://your-n8n/webhook/...' \
+curl -fsSL https://raw.githubusercontent.com/edwardtoday/fio-tests/refs/heads/main/run-fio.sh | bash -s -- --profile quick --upload .
 ```
 
 备用脚本地址（Linode Object Storage）：
