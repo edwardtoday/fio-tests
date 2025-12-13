@@ -4,6 +4,14 @@ GitHub Pages 报告页面：`https://edwardtoday.github.io/fio-tests/`（首页�
 
 测试结果 Markdown：`results/`（`results/*.md`）。
 
+## 开发：聚合结构化数据
+
+将 `results/runs/*.json` 聚合为 `results/data.json`：
+
+```sh
+python3 scripts/aggregate_runs.py
+```
+
 ## 一键脚本（推荐）
 
 仓库提供 `run-fio.sh`，按平台自动选择 `posixaio/libaio`，支持多套 profile，并输出 JSON 结果到目标目录：
