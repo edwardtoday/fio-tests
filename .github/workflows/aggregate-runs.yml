@@ -1,0 +1,43 @@
+name: Aggregate fio runs
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - results/runs/*.json
+      - scripts/aggregate_runs.py
+
+concurrency:
+  group: aggregate-runs-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  aggregate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Aggregate to results/data.json
+        run: python3 scripts/aggregate_runs.py
+
+      - name: Commit results/data.json (if changed)
+        run: |
+          if git diff --quiet -- results/data.json; then
+            echo "No changes in results/data.json"
+            exit 0
+          fi
+          git config user.name "fio-tests bot"
+          git config user.email "fio-tests-bot@users.noreply.github.com"
+          git add results/data.json
+          git commit -m "自动更新 results/data.json"
+          git push
+

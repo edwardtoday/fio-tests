@@ -4,6 +4,8 @@ GitHub Pages 报告页面：`https://edwardtoday.github.io/fio-tests/`（首页�
 
 测试结果 Markdown：`results/`（`results/*.md`）。
 
+维护者：如需搭建 n8n 上报通道（不让跑测试的人接触 GitHub 凭证），见 `docs/n8n-setup.md`。
+
 ## 开发：聚合结构化数据
 
 将 `results/runs/*.json` 聚合为 `results/data.json`：

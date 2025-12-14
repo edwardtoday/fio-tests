@@ -193,8 +193,8 @@ run_id = timestamp_utc_compact + "_" + system_hash
 
 1) 校验 shared secret
 2) 写入 `results/runs/<run_id>.json`
-3) 聚合生成/更新 `results/data.json`（或等价索引数据）
-4) 更新 `index.html`（从聚合数据渲染/注入）
-5) 将变更提交到 GitHub
+3) 将变更提交到 GitHub（至少包含新增的 `results/runs/<run_id>.json`）
+4) 由 GitHub Actions 自动聚合生成/更新 `results/data.json`（触发条件：push `results/runs/*.json`）
+5) `index.html` 直接读取 `results/data.json` 渲染（无需 n8n 注入/改写 HTML）
    - 可选：直接 push main（省事）
    - 可选：开 PR + Action 校验（更安全）
