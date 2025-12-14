@@ -43,6 +43,16 @@ FIO_TESTS_WEBHOOK_SECRET='<secret>' \
 curl -fsSL https://raw.githubusercontent.com/edwardtoday/fio-tests/refs/heads/main/run-fio.sh | bash -s -- --profile full --upload --system 'Your-System-Name' .
 ```
 
+注意：示例中的 URL 不要加尖括号（`<...>`），否则会被 shell 当作重定向导致语法错误。
+
+如遇 SSH 断线等原因导致脚本中断，但目录里已经生成了 `fio-manifest-*.tsv` 与 `fio-*.fio.json`，可用 `--finalize-only` 重新生成 `fio-run-*.json` 并上传（不会重跑 fio）：
+
+```sh
+FIO_TESTS_WEBHOOK_URL='https://n8n.sansi.io/webhook/fio-tests-372bba2a-faab-4927-b839-f8e7a1e0d7b5' \
+FIO_TESTS_WEBHOOK_SECRET='<secret>' \
+curl -fsSL https://raw.githubusercontent.com/edwardtoday/fio-tests/refs/heads/main/run-fio.sh | bash -s -- --finalize-only --upload --system 'Your-System-Name' .
+```
+
 需要 sudo（当前目录无写权限或需要直写设备）：
 
 ```sh
@@ -53,7 +63,7 @@ curl -fsSL https://raw.githubusercontent.com/edwardtoday/fio-tests/refs/heads/ma
 
 ```sh
 FIO_TESTS_WEBHOOK_URL='https://your-n8n/webhook/...' \
-curl -fsSL https://raw.githubusercontent.com/edwardtoday/fio-tests/refs/heads/main/run-fio.sh | bash -s -- --profile quick --upload .
+curl -fsSL https://raw.githubusercontent.com/edwardtoday/fio-tests/refs/heads/main/run-fio.sh | bash -s -- --profile quick --upload --system 'Your-System-Name' .
 ```
 
 备用脚本地址（Linode Object Storage）：

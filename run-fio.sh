@@ -21,6 +21,9 @@ WEBHOOK_SECRET="${FIO_TESTS_WEBHOOK_SECRET:-}"
 SYSTEM_NAME_ENV="${FIO_TESTS_SYSTEM:-}"
 UPLOAD_REPO="edwardtoday/fio-tests"
 EMIT_RUN_JSON="yes"
+FINALIZE_ONLY="no"
+MANIFEST_OVERRIDE=""
+RUN_ID_OVERRIDE=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -34,6 +37,12 @@ while [[ $# -gt 0 ]]; do
       UPLOAD_CHOICE="yes"; shift ;;
     --no-upload)
       UPLOAD_CHOICE="no"; shift ;;
+    --finalize-only)
+      FINALIZE_ONLY="yes"; shift ;;
+    --manifest)
+      MANIFEST_OVERRIDE="${2:-}"; shift 2 ;;
+    --run-id)
+      RUN_ID_OVERRIDE="${2:-}"; shift 2 ;;
     --mode)
       UPLOAD_MODE="${2:-}"; shift 2 ;;
     --webhook-url)
@@ -54,6 +63,11 @@ Optional upload (default: ask/no):
   --webhook-url URL            (or env: FIO_TESTS_WEBHOOK_URL)
   --webhook-secret SECRET      (or env: FIO_TESTS_WEBHOOK_SECRET)
   --repo OWNER/REPO            (default: edwardtoday/fio-tests)
+
+Finalize / upload existing artifacts (no fio run):
+  --finalize-only
+  --manifest PATH              (default: latest fio-manifest-*.tsv under --out)
+  --run-id RUN_ID              (resolves to --out/fio-manifest-RUN_ID.tsv)
 
 Run JSON output:
   By default, writes a normalized run JSON to --out directory.
@@ -122,7 +136,7 @@ echo "log dir: ${OUT_DIR}"
 cleanup() {
   rm -f "${FILENAME}"
 }
-trap cleanup EXIT
+trap cleanup EXIT HUP INT TERM
 
 run_json() {
   local cmd="$1" json_out="$2"
@@ -180,8 +194,46 @@ if [[ -n "${system_hash}" ]]; then
   run_id="${run_id}_${system_hash}"
 fi
 
+if [[ -n "${RUN_ID_OVERRIDE}" ]]; then
+  run_id="${RUN_ID_OVERRIDE}"
+fi
+
 manifest_path="${OUT_DIR}/fio-manifest-${run_id}.tsv"
 run_json_path="${OUT_DIR}/fio-run-${run_id}.json"
+
+if [[ -n "${MANIFEST_OVERRIDE}" ]]; then
+  manifest_path="${MANIFEST_OVERRIDE}"
+  run_id="$(basename "${manifest_path}")"
+  run_id="${run_id#fio-manifest-}"
+  run_id="${run_id%.tsv}"
+  run_json_path="${OUT_DIR}/fio-run-${run_id}.json"
+fi
+
+if [[ "${FINALIZE_ONLY}" == "yes" && -z "${MANIFEST_OVERRIDE}" && -z "${RUN_ID_OVERRIDE}" ]]; then
+  latest_manifest="$(ls -1t "${OUT_DIR}"/fio-manifest-*.tsv 2>/dev/null | head -n 1 || true)"
+  if [[ -z "${latest_manifest}" ]]; then
+    echo "ERROR: --finalize-only requires an existing manifest; none found under: ${OUT_DIR}" >&2
+    exit 2
+  fi
+  manifest_path="${latest_manifest}"
+  run_id="$(basename "${manifest_path}")"
+  run_id="${run_id#fio-manifest-}"
+  run_id="${run_id%.tsv}"
+  run_json_path="${OUT_DIR}/fio-run-${run_id}.json"
+fi
+
+if [[ "${FINALIZE_ONLY}" == "yes" ]]; then
+  # Reconstruct timestamps from run_id prefix (YYYYMMDDTHHMMSSZ).
+  run_ts_compact="${run_id%%_*}"
+  if command -v python3 >/dev/null 2>&1; then
+    run_ts_iso="$(python3 - <<'PY' "${run_ts_compact}"
+import sys
+ts = sys.argv[1]
+print(f"{ts[0:4]}-{ts[4:6]}-{ts[6:8]}T{ts[9:11]}:{ts[11:13]}:{ts[13:15]}Z")
+PY
+)"
+  fi
+fi
 
 json_path() {
   local name="$1"
@@ -299,16 +351,18 @@ run_db() {
   run_fsync "write" "16k" 1 60 "1G" "db-fdatasync-write-16k-qd1"
 }
 
-case "${PROFILE}" in
-  quick) run_quick ;;
-  standard) run_standard ;;
-  full) run_full ;;
-  db) run_db ;;
-  *)
-    echo "ERROR: unknown profile: ${PROFILE} (expected: quick|standard|full|db)" >&2
-    exit 2
-    ;;
-esac
+if [[ "${FINALIZE_ONLY}" != "yes" ]]; then
+  case "${PROFILE}" in
+    quick) run_quick ;;
+    standard) run_standard ;;
+    full) run_full ;;
+    db) run_db ;;
+    *)
+      echo "ERROR: unknown profile: ${PROFILE} (expected: quick|standard|full|db)" >&2
+      exit 2
+      ;;
+  esac
+fi
 
 if [[ "${EMIT_RUN_JSON}" == "yes" && -n "${SYSTEM_NAME}" ]]; then
   if command -v python3 >/dev/null 2>&1; then
