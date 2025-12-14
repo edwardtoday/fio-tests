@@ -169,9 +169,7 @@ percent_bytes() {
 
 standard_size_for_random="1G"
 standard_runtime_s=120
-quick_runtime_s=60
 seq_runtime_s_standard=120
-seq_runtime_s_quick=60
 
 run_ts_compact="$(date -u +%Y%m%dT%H%M%SZ)"
 run_ts_iso="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -277,10 +275,11 @@ run_fsync() {
 }
 
 run_quick() {
-  run_rand "randwrite" "4k" 1 "${quick_runtime_s}" "${standard_size_for_random}" "randwrite-4k-qd1"
-  run_rand "randread"  "4k" 1 "${quick_runtime_s}" "${standard_size_for_random}" "randread-4k-qd1"
-  run_seq "read"  "1M" 64 "${seq_runtime_s_quick}" "seq-read-1m"
-  run_seq "write" "1M" 64 "${seq_runtime_s_quick}" "seq-write-1m"
+  # quick 必须是 full/standard 的子集：参数保持一致，便于横向比较
+  run_rand "randwrite" "4k" 1 "${standard_runtime_s}" "${standard_size_for_random}" "randwrite-4k-qd1"
+  run_rand "randread"  "4k" 1 "${standard_runtime_s}" "${standard_size_for_random}" "randread-4k-qd1"
+  run_seq "read"  "1M" 64 "${seq_runtime_s_standard}" "seq-read-1m"
+  run_seq "write" "1M" 64 "${seq_runtime_s_standard}" "seq-write-1m"
 }
 
 run_standard() {

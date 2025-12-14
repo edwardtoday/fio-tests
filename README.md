@@ -24,7 +24,7 @@ python3 scripts/aggregate_runs.py
 
 Profile：
 
-- `quick`：4K 随机读/写 @QD1 + 1M 顺序读/写（适合来料快测）
+- `quick`：`full/standard` 的子集（参数一致，仅减少 case 数量）：4K 随机读/写 @QD1 + 1M 顺序读/写（适合来料快测、但仍可与 full 横向对比）
 - `standard`：4K 随机读/写 @QD1/@QD4 + 4K randrw 70/30 @QD1/@QD4 + 1M 顺序读/写（通用基线）
 - `full`：`standard` + 持续顺序写（16GiB 或可用空间 60%）+ 持续随机写（10min）
 - `db`：4K/8K/16K 随机读/写 @QD1/@QD4 + `fdatasync` 写入测试（buffered）
