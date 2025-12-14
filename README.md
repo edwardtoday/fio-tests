@@ -35,6 +35,8 @@ Profile：
 curl -fsSL https://raw.githubusercontent.com/edwardtoday/fio-tests/refs/heads/main/run-fio.sh | bash -s -- --profile quick .
 ```
 
+默认行为：脚本会复用当前目录中已存在且“参数匹配”的 `fio-*.fio.json`，只补跑缺失的 case（避免重复耗时）；如需强制全部重跑，可加 `--force`。
+
 如需上传（`curl | bash` 场景建议显式提供系统名；否则脚本会尝试从 `/dev/tty` 交互读取，或从 `FIO_TESTS_SYSTEM` 读取）：
 
 ```sh
