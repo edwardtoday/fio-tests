@@ -16,6 +16,104 @@
       },
       "time_based": 1
     },
+    "51aee2dce578ab0773b9": {
+      "bs": "4k",
+      "direct": 1,
+      "fdatasync": 0,
+      "ioengine": "posixaio",
+      "numjobs": 1,
+      "qd": 1,
+      "runtime_s": 120,
+      "rw": "randread",
+      "rwmixread": null,
+      "size_policy": {
+        "fixed_bytes": 1073741824,
+        "mode": "fixed"
+      },
+      "time_based": 1
+    },
+    "7d58470633e87c547f4d": {
+      "bs": "4k",
+      "direct": 1,
+      "fdatasync": 0,
+      "ioengine": "posixaio",
+      "numjobs": 1,
+      "qd": 4,
+      "runtime_s": 120,
+      "rw": "randrw",
+      "rwmixread": 70,
+      "size_policy": {
+        "fixed_bytes": 1073741824,
+        "mode": "fixed"
+      },
+      "time_based": 1
+    },
+    "83ca9bde8aa9be383061": {
+      "bs": "4k",
+      "direct": 1,
+      "fdatasync": 0,
+      "ioengine": "posixaio",
+      "numjobs": 1,
+      "qd": 4,
+      "runtime_s": 600,
+      "rw": "randwrite",
+      "rwmixread": null,
+      "size_policy": {
+        "fixed_bytes": 4294967296,
+        "mode": "min_fixed_or_pct_free",
+        "pct_free": 60
+      },
+      "time_based": 1
+    },
+    "83e56dd822c5c0ff71cd": {
+      "bs": "1M",
+      "direct": 1,
+      "fdatasync": 0,
+      "ioengine": "posixaio",
+      "numjobs": 1,
+      "qd": 64,
+      "runtime_s": null,
+      "rw": "write",
+      "rwmixread": null,
+      "size_policy": {
+        "fixed_bytes": 17179869184,
+        "mode": "fixed_or_pct_free",
+        "pct_free": 60
+      },
+      "time_based": 0
+    },
+    "8cb06d7cf36accfa38f4": {
+      "bs": "1M",
+      "direct": 1,
+      "fdatasync": 0,
+      "ioengine": "posixaio",
+      "numjobs": 1,
+      "qd": 64,
+      "runtime_s": 120,
+      "rw": "write",
+      "rwmixread": null,
+      "size_policy": {
+        "fixed_bytes": 1073741824,
+        "mode": "fixed"
+      },
+      "time_based": 1
+    },
+    "a189f15c3edaae771942": {
+      "bs": "4k",
+      "direct": 1,
+      "fdatasync": 0,
+      "ioengine": "posixaio",
+      "numjobs": 1,
+      "qd": 4,
+      "runtime_s": 120,
+      "rw": "randwrite",
+      "rwmixread": null,
+      "size_policy": {
+        "fixed_bytes": 1073741824,
+        "mode": "fixed"
+      },
+      "time_based": 1
+    },
     "a83adeea858e97abf3dc": {
       "bs": "4k",
       "direct": 1,
@@ -25,6 +123,54 @@
       "qd": 1,
       "runtime_s": 60,
       "rw": "randwrite",
+      "rwmixread": null,
+      "size_policy": {
+        "fixed_bytes": 1073741824,
+        "mode": "fixed"
+      },
+      "time_based": 1
+    },
+    "ace945c2e83584f4595a": {
+      "bs": "4k",
+      "direct": 1,
+      "fdatasync": 0,
+      "ioengine": "posixaio",
+      "numjobs": 1,
+      "qd": 1,
+      "runtime_s": 120,
+      "rw": "randwrite",
+      "rwmixread": null,
+      "size_policy": {
+        "fixed_bytes": 1073741824,
+        "mode": "fixed"
+      },
+      "time_based": 1
+    },
+    "c26a29b46ad4abb5c5e4": {
+      "bs": "1M",
+      "direct": 1,
+      "fdatasync": 0,
+      "ioengine": "posixaio",
+      "numjobs": 1,
+      "qd": 64,
+      "runtime_s": 120,
+      "rw": "read",
+      "rwmixread": null,
+      "size_policy": {
+        "fixed_bytes": 1073741824,
+        "mode": "fixed"
+      },
+      "time_based": 1
+    },
+    "cb56284e59ff027cd6cf": {
+      "bs": "4k",
+      "direct": 1,
+      "fdatasync": 0,
+      "ioengine": "posixaio",
+      "numjobs": 1,
+      "qd": 4,
+      "runtime_s": 120,
+      "rw": "randread",
       "rwmixread": null,
       "size_policy": {
         "fixed_bytes": 1073741824,
@@ -48,6 +194,22 @@
       },
       "time_based": 1
     },
+    "d5d58f35f0a3a25a97fd": {
+      "bs": "4k",
+      "direct": 1,
+      "fdatasync": 0,
+      "ioengine": "posixaio",
+      "numjobs": 1,
+      "qd": 1,
+      "runtime_s": 120,
+      "rw": "randrw",
+      "rwmixread": 70,
+      "size_policy": {
+        "fixed_bytes": 1073741824,
+        "mode": "fixed"
+      },
+      "time_based": 1
+    },
     "dab8a5c2f3415f814276": {
       "bs": "1M",
       "direct": 1,
@@ -65,7 +227,7 @@
       "time_based": 1
     }
   },
-  "generated_at": "2025-12-14T04:19:26Z",
+  "generated_at": "2025-12-14T05:50:22Z",
   "legacy_rows": [
     {
       "device": "Lexar-Silver-Plus-64G",
@@ -313,6 +475,162 @@
   ],
   "measurements": [
     {
+      "bw_mib_s": 40.51151084899902,
+      "case_key": "51aee2dce578ab0773b9",
+      "clat_p95_ms": 0.113152,
+      "clat_p99_ms": 0.154624,
+      "iops": 10370.946909,
+      "op": "read",
+      "run_id": "20251214T052354Z_2f62b0ea878282366a6d",
+      "size_effective_bytes": 1073741824,
+      "system": "MBP14-M1Max-1TB",
+      "system_hash": "2f62b0ea878282366a6d",
+      "timestamp": "2025-12-14T05:23:54Z"
+    },
+    {
+      "bw_mib_s": 78.39286804199219,
+      "case_key": "7d58470633e87c547f4d",
+      "clat_p95_ms": 0.14848,
+      "clat_p99_ms": 1.662976,
+      "iops": 20068.574429,
+      "op": "read",
+      "run_id": "20251214T052354Z_2f62b0ea878282366a6d",
+      "size_effective_bytes": 1073741824,
+      "system": "MBP14-M1Max-1TB",
+      "system_hash": "2f62b0ea878282366a6d",
+      "timestamp": "2025-12-14T05:23:54Z"
+    },
+    {
+      "bw_mib_s": 33.608866691589355,
+      "case_key": "7d58470633e87c547f4d",
+      "clat_p95_ms": 0.191488,
+      "clat_p99_ms": 1.695744,
+      "iops": 8603.869968,
+      "op": "write",
+      "run_id": "20251214T052354Z_2f62b0ea878282366a6d",
+      "size_effective_bytes": 1073741824,
+      "system": "MBP14-M1Max-1TB",
+      "system_hash": "2f62b0ea878282366a6d",
+      "timestamp": "2025-12-14T05:23:54Z"
+    },
+    {
+      "bw_mib_s": 71.509840965271,
+      "case_key": "83ca9bde8aa9be383061",
+      "clat_p95_ms": 0.305152,
+      "clat_p99_ms": 1.974272,
+      "iops": 18306.519489,
+      "op": "write",
+      "run_id": "20251214T052354Z_2f62b0ea878282366a6d",
+      "size_effective_bytes": 4294967296,
+      "system": "MBP14-M1Max-1TB",
+      "system_hash": "2f62b0ea878282366a6d",
+      "timestamp": "2025-12-14T05:23:54Z"
+    },
+    {
+      "bw_mib_s": 2184.824643135071,
+      "case_key": "83e56dd822c5c0ff71cd",
+      "clat_p95_ms": 14.221312,
+      "clat_p99_ms": 33.161216,
+      "iops": 2184.824643,
+      "op": "write",
+      "run_id": "20251214T052354Z_2f62b0ea878282366a6d",
+      "size_effective_bytes": 17179869184,
+      "system": "MBP14-M1Max-1TB",
+      "system_hash": "2f62b0ea878282366a6d",
+      "timestamp": "2025-12-14T05:23:54Z"
+    },
+    {
+      "bw_mib_s": 2940.087327003479,
+      "case_key": "8cb06d7cf36accfa38f4",
+      "clat_p95_ms": 13.172736,
+      "clat_p99_ms": 24.510464,
+      "iops": 2940.087328,
+      "op": "write",
+      "run_id": "20251214T052354Z_2f62b0ea878282366a6d",
+      "size_effective_bytes": null,
+      "system": "MBP14-M1Max-1TB",
+      "system_hash": "2f62b0ea878282366a6d",
+      "timestamp": "2025-12-14T05:23:54Z"
+    },
+    {
+      "bw_mib_s": 76.18380451202393,
+      "case_key": "a189f15c3edaae771942",
+      "clat_p95_ms": 0.272384,
+      "clat_p99_ms": 1.941504,
+      "iops": 19503.054141,
+      "op": "write",
+      "run_id": "20251214T052354Z_2f62b0ea878282366a6d",
+      "size_effective_bytes": 1073741824,
+      "system": "MBP14-M1Max-1TB",
+      "system_hash": "2f62b0ea878282366a6d",
+      "timestamp": "2025-12-14T05:23:54Z"
+    },
+    {
+      "bw_mib_s": 29.560007095336914,
+      "case_key": "ace945c2e83584f4595a",
+      "clat_p95_ms": 0.136192,
+      "clat_p99_ms": 0.610304,
+      "iops": 7567.361939,
+      "op": "write",
+      "run_id": "20251214T052354Z_2f62b0ea878282366a6d",
+      "size_effective_bytes": 1073741824,
+      "system": "MBP14-M1Max-1TB",
+      "system_hash": "2f62b0ea878282366a6d",
+      "timestamp": "2025-12-14T05:23:54Z"
+    },
+    {
+      "bw_mib_s": 4279.76567363739,
+      "case_key": "c26a29b46ad4abb5c5e4",
+      "clat_p95_ms": 5.40672,
+      "clat_p99_ms": 9.109504,
+      "iops": 4279.765674,
+      "op": "read",
+      "run_id": "20251214T052354Z_2f62b0ea878282366a6d",
+      "size_effective_bytes": null,
+      "system": "MBP14-M1Max-1TB",
+      "system_hash": "2f62b0ea878282366a6d",
+      "timestamp": "2025-12-14T05:23:54Z"
+    },
+    {
+      "bw_mib_s": 159.87155151367188,
+      "case_key": "cb56284e59ff027cd6cf",
+      "clat_p95_ms": 0.121344,
+      "clat_p99_ms": 0.156672,
+      "iops": 40927.117274,
+      "op": "read",
+      "run_id": "20251214T052354Z_2f62b0ea878282366a6d",
+      "size_effective_bytes": 1073741824,
+      "system": "MBP14-M1Max-1TB",
+      "system_hash": "2f62b0ea878282366a6d",
+      "timestamp": "2025-12-14T05:23:54Z"
+    },
+    {
+      "bw_mib_s": 24.441787719726562,
+      "case_key": "d5d58f35f0a3a25a97fd",
+      "clat_p95_ms": 0.12032,
+      "clat_p99_ms": 0.177152,
+      "iops": 6257.097858,
+      "op": "read",
+      "run_id": "20251214T052354Z_2f62b0ea878282366a6d",
+      "size_effective_bytes": 1073741824,
+      "system": "MBP14-M1Max-1TB",
+      "system_hash": "2f62b0ea878282366a6d",
+      "timestamp": "2025-12-14T05:23:54Z"
+    },
+    {
+      "bw_mib_s": 10.47940444946289,
+      "case_key": "d5d58f35f0a3a25a97fd",
+      "clat_p95_ms": 0.160768,
+      "clat_p99_ms": 0.242688,
+      "iops": 2682.727644,
+      "op": "write",
+      "run_id": "20251214T052354Z_2f62b0ea878282366a6d",
+      "size_effective_bytes": 1073741824,
+      "system": "MBP14-M1Max-1TB",
+      "system_hash": "2f62b0ea878282366a6d",
+      "timestamp": "2025-12-14T05:23:54Z"
+    },
+    {
       "bw_mib_s": 38.74036979675293,
       "case_key": "4f325a065f3dbaa4c74f",
       "clat_p95_ms": 0.134144,
@@ -374,6 +692,15 @@
       "system": "MBP14-M1Max-1TB (quick upload test)",
       "system_hash": "fbc020b1a4c4c80e0b44",
       "timestamp": "2025-12-14T04:11:45Z"
+    },
+    {
+      "engine": "posixaio",
+      "invoked_profile": "full",
+      "run_id": "20251214T052354Z_2f62b0ea878282366a6d",
+      "source_path": "results/runs/20251214T052354Z_2f62b0ea878282366a6d.json",
+      "system": "MBP14-M1Max-1TB",
+      "system_hash": "2f62b0ea878282366a6d",
+      "timestamp": "2025-12-14T05:23:54Z"
     }
   ],
   "runs_dir": "results/runs",
@@ -385,6 +712,13 @@
       "run_count": 1,
       "system": "MBP14-M1Max-1TB (quick upload test)",
       "system_hash": "fbc020b1a4c4c80e0b44"
+    },
+    {
+      "latest_run_id": "20251214T052354Z_2f62b0ea878282366a6d",
+      "latest_timestamp": "2025-12-14T05:23:54Z",
+      "run_count": 1,
+      "system": "MBP14-M1Max-1TB",
+      "system_hash": "2f62b0ea878282366a6d"
     }
   ]
 }
