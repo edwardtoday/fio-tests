@@ -1,0 +1,321 @@
+{
+  "cases": [
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "libaio",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 120,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "2b465415e3fe4ba92b7c",
+      "fio_json_path": "fio-randwrite-4k-qd1.fio.json",
+      "ops": {
+        "write": {
+          "bw_mib_s": 44.84988594055176,
+          "clat_p95_ms": 0.081408,
+          "clat_p99_ms": 0.248832,
+          "iops": 11481.570987
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "libaio",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 120,
+        "rw": "randread",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "ab0dd2d29378e2187a18",
+      "fio_json_path": "fio-randread-4k-qd1.fio.json",
+      "ops": {
+        "read": {
+          "bw_mib_s": 27.9789981842041,
+          "clat_p95_ms": 0.16896,
+          "clat_p99_ms": 0.301056,
+          "iops": 7162.623645
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "libaio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "4395ae92d1b4283d510a",
+      "fio_json_path": "fio-randwrite-4k-qd4.fio.json",
+      "ops": {
+        "write": {
+          "bw_mib_s": 94.24071788787842,
+          "clat_p95_ms": 0.252928,
+          "clat_p99_ms": 0.321536,
+          "iops": 24125.623953
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "libaio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randread",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "73fc46f7719a2758acbb",
+      "fio_json_path": "fio-randread-4k-qd4.fio.json",
+      "ops": {
+        "read": {
+          "bw_mib_s": 100.11788272857666,
+          "clat_p95_ms": 0.268288,
+          "clat_p99_ms": 0.325632,
+          "iops": 25630.178082
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "libaio",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 120,
+        "rw": "randrw",
+        "rwmixread": 70,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "30a9443d8cdb88683318",
+      "fio_json_path": "fio-randrw70-4k-qd1.fio.json",
+      "ops": {
+        "read": {
+          "bw_mib_s": 22.048969268798828,
+          "clat_p95_ms": 0.173056,
+          "clat_p99_ms": 0.305152,
+          "iops": 5644.536296
+        },
+        "write": {
+          "bw_mib_s": 9.45740795135498,
+          "clat_p95_ms": 0.086528,
+          "clat_p99_ms": 0.25088,
+          "iops": 2421.096491
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "libaio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randrw",
+        "rwmixread": 70,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "0de82d523180adb4f171",
+      "fio_json_path": "fio-randrw70-4k-qd4.fio.json",
+      "ops": {
+        "read": {
+          "bw_mib_s": 70.03782749176025,
+          "clat_p95_ms": 0.272384,
+          "clat_p99_ms": 0.342016,
+          "iops": 17929.683919
+        },
+        "write": {
+          "bw_mib_s": 30.03067398071289,
+          "clat_p95_ms": 0.181248,
+          "clat_p99_ms": 0.31744,
+          "iops": 7687.852601
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "1M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "libaio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "read",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "730d705d2b6591a7e696",
+      "fio_json_path": "fio-seq-read-1m.fio.json",
+      "ops": {
+        "read": {
+          "bw_mib_s": 12022.840905189514,
+          "clat_p95_ms": 6.38976,
+          "clat_p99_ms": 7.438336,
+          "iops": 12022.840905
+        }
+      },
+      "size_effective_bytes": null
+    },
+    {
+      "case": {
+        "bs": "1M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "libaio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "write",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "5a204e94b757ed6b0742",
+      "fio_json_path": "fio-seq-write-1m.fio.json",
+      "ops": {
+        "write": {
+          "bw_mib_s": 9729.069622039795,
+          "clat_p95_ms": 10.682368,
+          "clat_p99_ms": 13.565952,
+          "iops": 9729.069622
+        }
+      },
+      "size_effective_bytes": null
+    },
+    {
+      "case": {
+        "bs": "1M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "libaio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": null,
+        "rw": "write",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 17179869184,
+          "mode": "fixed_or_pct_free",
+          "pct_free": 60
+        },
+        "time_based": 0
+      },
+      "case_key": "e0e613f56515f2c0190d",
+      "fio_json_path": "fio-sustained-write-1m.fio.json",
+      "ops": {
+        "write": {
+          "bw_mib_s": 8354.920958518982,
+          "clat_p95_ms": 9.764864,
+          "clat_p99_ms": 12.517376,
+          "iops": 8354.920959
+        }
+      },
+      "size_effective_bytes": 17179869184
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "libaio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 600,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 4294967296,
+          "mode": "min_fixed_or_pct_free",
+          "pct_free": 60
+        },
+        "time_based": 1
+      },
+      "case_key": "5b5b43e6583f88d47f00",
+      "fio_json_path": "fio-sustained-randwrite-4k-qd4-10m.fio.json",
+      "ops": {
+        "write": {
+          "bw_mib_s": 97.65121650695801,
+          "clat_p95_ms": 0.19968,
+          "clat_p99_ms": 0.313344,
+          "iops": 24998.711669
+        }
+      },
+      "size_effective_bytes": 4294967296
+    }
+  ],
+  "mode": "update",
+  "repo": "edwardtoday/fio-tests",
+  "run": {
+    "engine": "libaio",
+    "invoked_profile": "full",
+    "out_dir": ".",
+    "run_id": "20251214T134837Z_4e0130c06bca64ea4c9f",
+    "system": "Linode-32GB",
+    "system_hash": "4e0130c06bca64ea4c9f",
+    "target_dir": ".",
+    "timestamp": "2025-12-14T13:48:37Z",
+    "timestamp_compact": "20251214T134837Z"
+  }
+}
