@@ -36,6 +36,13 @@
         </select>
       </label>
 
+      <label>view
+        <select id="viewSelect">
+          <option value="by_system" selected>by system</option>
+          <option value="history">history (time)</option>
+        </select>
+      </label>
+
       <label>metric
         <select id="metricSelect">
           <option value="bw_mib_s" selected>bw_mib_s</option>
@@ -44,6 +51,8 @@
           <option value="clat_p99_ms">clat_p99_ms</option>
         </select>
       </label>
+
+      <label>system <select id="systemSelect"></select></label>
 
       <label>rw <select id="rwSelect"></select></label>
       <label>bs <select id="bsSelect"></select></label>
@@ -223,8 +232,9 @@ let bwChart = null;
 let BW_DATASET_COUNT = 4;
 const BW_BAR_THICKNESS = 12; // 提高每组柱子的厚度，避免 data label 纵向挤在一起
 
-function ensureChart(datasetCount, datasetLabels) {
-  if (bwChart && BW_DATASET_COUNT === datasetCount) return;
+function ensureChart(chartType, datasetCount, datasetLabels) {
+  const needRecreate = !bwChart || bwChart.config.type !== chartType || BW_DATASET_COUNT !== datasetCount;
+  if (!needRecreate) return;
 
   if (bwChart) bwChart.destroy();
   BW_DATASET_COUNT = datasetCount;
@@ -233,16 +243,17 @@ function ensureChart(datasetCount, datasetLabels) {
   const datasets = datasetLabels.map((label, idx) => ({
     label,
     backgroundColor: colors[idx % colors.length],
+    borderColor: colors[idx % colors.length],
     data: [],
     barThickness: BW_BAR_THICKNESS,
     maxBarThickness: BW_BAR_THICKNESS
   }));
 
   bwChart = new Chart(bwCanvas.getContext('2d'), {
-    type: 'bar',
+    type: chartType,
     data: { labels: [], datasets },
     options: {
-      indexAxis: 'y',
+      indexAxis: chartType === 'bar' ? 'y' : 'x',
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
@@ -266,13 +277,13 @@ function ensureChart(datasetCount, datasetLabels) {
 }
 
 function renderChart(sorted) {
-  // 按设备数量动态拉高画布，避免 data label 纵向重叠
-  const perDevice = BW_BAR_THICKNESS * BW_DATASET_COUNT + 18;
-  const height = 180 + sorted.length * perDevice;
-  bwCanvas.style.height = `${height}px`;
-
   if (viewMode === 'legacy') {
-    ensureChart(4, ['随机读 MiB/s', '随机写 MiB/s', '顺序读 MiB/s', '顺序写 MiB/s']);
+    // legacy: 设备为行（bar 横向）
+    const perDevice = BW_BAR_THICKNESS * BW_DATASET_COUNT + 18;
+    const height = 180 + sorted.length * perDevice;
+    bwCanvas.style.height = `${height}px`;
+
+    ensureChart('bar', 4, ['随机读 MiB/s', '随机写 MiB/s', '顺序读 MiB/s', '顺序写 MiB/s']);
     bwChart.data.labels = sorted.map(d => d.device);
     bwChart.data.datasets[0].data = sorted.map(d => d.rand_read_bw_mib);
     bwChart.data.datasets[1].data = sorted.map(d => d.rand_write_bw_mib);
@@ -280,10 +291,53 @@ function renderChart(sorted) {
     bwChart.data.datasets[3].data = sorted.map(d => d.seq_write_mib_s);
   } else {
     const metric = document.getElementById('metricSelect').value;
-    const label = `metric: ${metric}`;
-    ensureChart(1, [label]);
-    bwChart.data.labels = sorted.map(d => d.system);
-    bwChart.data.datasets[0].data = sorted.map(d => d[metric]);
+    const view = document.getElementById('viewSelect').value;
+    if (view === 'history') {
+      // history: 同一 system 多次 run 按时间串起来（line）
+      const height = 260 + Math.min(30, sorted.length) * 10;
+      bwCanvas.style.height = `${height}px`;
+
+      const bySystem = new Map();
+      sorted.forEach(r => {
+        if (!bySystem.has(r.system)) bySystem.set(r.system, []);
+        bySystem.get(r.system).push(r);
+      });
+      const systems = Array.from(bySystem.keys()).sort((a,b) => a.localeCompare(b, 'zh-Hans'));
+      const labels = Array.from(new Set(sorted.map(r => r.timestamp))).sort();
+
+      ensureChart('line', systems.length, systems.map(s => s));
+      bwChart.data.labels = labels;
+      bwChart.data.datasets.forEach((ds, idx) => {
+        const sys = systems[idx];
+        const list = bySystem.get(sys) || [];
+        const map = new Map(list.map(r => [r.timestamp, r]));
+        ds.data = labels.map(t => {
+          const row = map.get(t);
+          return row ? row[metric] : null;
+        });
+        ds.tension = 0.2;
+        ds.pointRadius = 2;
+        ds.borderWidth = 2;
+        ds.fill = false;
+      });
+      // line 图禁用 data labels，避免过密
+      bwChart.options.plugins.datalabels.display = false;
+      bwChart.options.scales.x = { ticks: { maxRotation: 0, minRotation: 0, autoSkip: true, maxTicksLimit: 12 } };
+      bwChart.options.scales.y = { beginAtZero: false };
+    } else {
+      // by_system: 默认以 system 为行（bar 横向）
+      const perDevice = BW_BAR_THICKNESS * BW_DATASET_COUNT + 18;
+      const height = 180 + sorted.length * perDevice;
+      bwCanvas.style.height = `${height}px`;
+
+      const label = `metric: ${metric}`;
+      ensureChart('bar', 1, [label]);
+      bwChart.data.labels = sorted.map(d => d.system);
+      bwChart.data.datasets[0].data = sorted.map(d => d[metric]);
+      bwChart.options.plugins.datalabels.display = true;
+      bwChart.options.scales.x = { beginAtZero: true };
+      bwChart.options.scales.y = { ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } };
+    }
   }
   bwChart.update();
 }
@@ -381,6 +435,8 @@ function buildRunsView(doc) {
   const sizePolicySelect = document.getElementById('sizePolicySelect');
   const caseSelect = document.getElementById('caseSelect');
   const opSelect = document.getElementById('opSelect');
+  const viewSelect = document.getElementById('viewSelect');
+  const systemSelect = document.getElementById('systemSelect');
 
   const sigs = Object.values(caseDefs);
   setSelectOptions(rwSelect, uniqSorted(sigs.map(s => s.rw)));
@@ -392,6 +448,7 @@ function buildRunsView(doc) {
   setSelectOptions(ioengineSelect, uniqSorted(sigs.map(s => s.ioengine)));
   setSelectOptions(mixSelect, uniqSorted(sigs.map(s => s.rwmixread)));
   setSelectOptions(sizePolicySelect, uniqSorted(sigs.map(s => s.size_policy?.mode)));
+  setSelectOptions(systemSelect, uniqSorted(measurements.map(m => m.system)), '(all)');
 
   function swapCaseKeyForOp(caseKey, wantOp) {
     const sig = caseDefs[caseKey];
@@ -491,6 +548,13 @@ function buildRunsView(doc) {
     rebuildCaseOptions(preferred);
     renderAll();
   });
+  viewSelect.addEventListener('change', () => {
+    // history 模式下没有 “latestOnly” 的意义，强制展示全量历史
+    const latestOnly = document.getElementById('latestOnly');
+    if (viewSelect.value === 'history') latestOnly.checked = false;
+    renderAll();
+  });
+  systemSelect.addEventListener('change', renderAll);
   document.getElementById('metricSelect').addEventListener('change', renderAll);
   document.getElementById('latestOnly').addEventListener('change', renderAll);
 
@@ -506,11 +570,14 @@ function buildRunsRows() {
   const op = document.getElementById('opSelect').value;
   const caseKey = document.getElementById('caseSelect').value;
   const latestOnly = document.getElementById('latestOnly').checked;
+  const view = document.getElementById('viewSelect').value;
+  const systemFilter = document.getElementById('systemSelect').value;
 
   if (!caseKey) return [];
 
   const rows = runsView.measurements
     .filter(m => m.case_key === caseKey && m.op === op)
+    .filter(m => !systemFilter || m.system === systemFilter)
     .map(m => ({
       system: m.system,
       timestamp: m.timestamp,
@@ -521,6 +588,8 @@ function buildRunsRows() {
       clat_p99_ms: m.clat_p99_ms
     }));
 
+  // history/time 模式必须保留历史 run
+  if (view === 'history') return rows;
   if (!latestOnly) return rows;
 
   const best = new Map();
@@ -544,7 +613,12 @@ function renderAll() {
     const op = document.getElementById('opSelect').value;
     const caseKey = document.getElementById('caseSelect').value;
     const sig = runsView.caseDefs[caseKey];
+    const view = document.getElementById('viewSelect').value;
+    const sys = document.getElementById('systemSelect').value;
     runsHint.textContent = sig ? `case_key=${caseKey} | ${caseLabel(sig)} | matched systems=${sorted.length}` : `case_key=${caseKey} | matched systems=${sorted.length}`;
+    if (view === 'history') {
+      runsHint.textContent = (sig ? `case_key=${caseKey} | ${caseLabel(sig)}` : `case_key=${caseKey}`) + (sys ? ` | system=${sys}` : '') + ` | runs=${sorted.length}`;
+    }
   }
 }
 
