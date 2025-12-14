@@ -77,6 +77,27 @@
     <tbody></tbody>
   </table>
 
+  <div id="runDetails" style="display:none; margin: 16px 0; padding: 12px; border: 1px solid #e4e7eb; border-radius: 8px; background: #fff;">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 8px;">
+      <div id="runDetailsTitle" style="font-weight: 600;"></div>
+      <button id="runDetailsClose" type="button">close</button>
+    </div>
+    <div id="runDetailsMeta" style="color:#52606d; font-size: 13px; margin-bottom: 10px;"></div>
+    <table id="runDetailsTable" style="margin: 0;">
+      <thead>
+        <tr>
+          <th data-key="case">case</th>
+          <th data-key="op">op</th>
+          <th data-key="iops">iops</th>
+          <th data-key="bw_mib_s">bw_mib_s</th>
+          <th data-key="clat_p95_ms">clat_p95_ms</th>
+          <th data-key="clat_p99_ms">clat_p99_ms</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
   <div class="charts">
     <canvas id="bwAll"></canvas>
   </div>
@@ -109,6 +130,14 @@ const runsControls = document.getElementById('runsControls');
 const runsHint = document.getElementById('runsHint');
 const tbody = document.querySelector('#results tbody');
 const theadRow = document.querySelector('#results thead tr');
+
+const runDetails = document.getElementById('runDetails');
+const runDetailsTitle = document.getElementById('runDetailsTitle');
+const runDetailsMeta = document.getElementById('runDetailsMeta');
+const runDetailsTbody = document.querySelector('#runDetailsTable tbody');
+document.getElementById('runDetailsClose').addEventListener('click', () => {
+  runDetails.style.display = 'none';
+});
 
 let viewMode = 'legacy'; // legacy|runs
 let sortKey = 'seq_read_mib_s';
@@ -166,8 +195,8 @@ function renderTable(sorted) {
         <td>${fmt(d.seq_write_mib_s,1)}</td>`;
     } else {
       tr.innerHTML = `
-        <td>${d.system}</td>
-        <td>${d.timestamp}</td>
+        <td><a href="#" data-runid="${d.run_id}">${d.system}</a></td>
+        <td><a href="results/runs/${d.run_id}.json" target="_blank" rel="noopener">${d.timestamp}</a></td>
         <td>${fmt(d.iops,0)}</td>
         <td>${fmt(d.bw_mib_s,2)}</td>
         <td>${fmtLatencyMs(d.clat_p95_ms)}</td>
@@ -304,6 +333,43 @@ function buildRunsView(doc) {
   const caseDefs = doc.case_defs || {};
   const measurements = doc.measurements || [];
 
+  function stableStringify(value) {
+    if (value === null || value === undefined) return 'null';
+    if (typeof value !== 'object') return JSON.stringify(value);
+    if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
+    const keys = Object.keys(value).sort();
+    return `{${keys.map(k => `${JSON.stringify(k)}:${stableStringify(value[k])}`).join(',')}}`;
+  }
+
+  const caseOps = new Map();
+  measurements.forEach(m => {
+    if (!m.case_key || !m.op) return;
+    let s = caseOps.get(m.case_key);
+    if (!s) {
+      s = new Set();
+      caseOps.set(m.case_key, s);
+    }
+    s.add(m.op);
+  });
+
+  const swapGroups = new Map();
+  const swapRwFamily = (rw) => {
+    if (rw === 'randread' || rw === 'randwrite') return 'randr';
+    if (rw === 'read' || rw === 'write') return 'seq';
+    return rw;
+  };
+  Object.entries(caseDefs).forEach(([ck, sig]) => {
+    const family = swapRwFamily(sig.rw);
+    const gsig = { ...sig, rw: family };
+    const gid = stableStringify(gsig);
+    let g = swapGroups.get(gid);
+    if (!g) {
+      g = {};
+      swapGroups.set(gid, g);
+    }
+    g[sig.rw] = ck;
+  });
+
   const rwSelect = document.getElementById('rwSelect');
   const bsSelect = document.getElementById('bsSelect');
   const qdSelect = document.getElementById('qdSelect');
@@ -314,6 +380,7 @@ function buildRunsView(doc) {
   const mixSelect = document.getElementById('mixSelect');
   const sizePolicySelect = document.getElementById('sizePolicySelect');
   const caseSelect = document.getElementById('caseSelect');
+  const opSelect = document.getElementById('opSelect');
 
   const sigs = Object.values(caseDefs);
   setSelectOptions(rwSelect, uniqSorted(sigs.map(s => s.rw)));
@@ -326,7 +393,44 @@ function buildRunsView(doc) {
   setSelectOptions(mixSelect, uniqSorted(sigs.map(s => s.rwmixread)));
   setSelectOptions(sizePolicySelect, uniqSorted(sigs.map(s => s.size_policy?.mode)));
 
-  function rebuildCaseOptions() {
+  function swapCaseKeyForOp(caseKey, wantOp) {
+    const sig = caseDefs[caseKey];
+    if (!sig) return '';
+    const family = swapRwFamily(sig.rw);
+    const gid = stableStringify({ ...sig, rw: family });
+    const group = swapGroups.get(gid) || {};
+    if (wantOp === 'read') return group.randread || group.read || '';
+    if (wantOp === 'write') return group.randwrite || group.write || '';
+    return '';
+  }
+
+  function normalizeSelection() {
+    const currentCaseKey = caseSelect.value;
+    if (!currentCaseKey) return;
+
+    const sig = caseDefs[currentCaseKey];
+    if (!sig) return;
+
+    const availableOps = Array.from(caseOps.get(currentCaseKey) || []);
+    if (availableOps.length === 1) {
+      opSelect.value = availableOps[0];
+      return;
+    }
+    if (availableOps.length === 0) return;
+
+    if (availableOps.includes(opSelect.value)) return;
+
+    const swapped = swapCaseKeyForOp(currentCaseKey, opSelect.value);
+    if (swapped && caseSelect.querySelector(`option[value="${swapped}"]`)) {
+      caseSelect.value = swapped;
+      return;
+    }
+
+    opSelect.value = availableOps[0];
+  }
+
+  function rebuildCaseOptions(preferredCaseKey = '') {
+    const selectedOp = opSelect.value;
     const rw = rwSelect.value;
     const bs = bsSelect.value;
     const qd = qdSelect.value;
@@ -338,7 +442,7 @@ function buildRunsView(doc) {
     const sp = sizePolicySelect.value;
 
     const entries = Object.entries(caseDefs)
-      .filter(([_, sig]) =>
+      .filter(([caseKey, sig]) =>
         matchesFilter(sig, 'rw', rw) &&
         matchesFilter(sig, 'bs', bs) &&
         matchesFilter(sig, 'qd', qd) &&
@@ -347,7 +451,8 @@ function buildRunsView(doc) {
         matchesFilter(sig, 'fdatasync', fd) &&
         matchesFilter(sig, 'ioengine', engine) &&
         matchesFilter(sig, 'rwmixread', mix) &&
-        (sp ? String(sig.size_policy?.mode || '') === String(sp) : true)
+        (sp ? String(sig.size_policy?.mode || '') === String(sp) : true) &&
+        (selectedOp ? (caseOps.get(caseKey)?.has(selectedOp) || false) : true)
       )
       .map(([ck, sig]) => ({ case_key: ck, label: caseLabel(sig) }))
       .sort((a,b) => a.label.localeCompare(b.label));
@@ -360,11 +465,15 @@ function buildRunsView(doc) {
       o.textContent = e.label;
       caseSelect.appendChild(o);
     });
-    if ([...caseSelect.options].some(o => o.value === current)) {
+    if (preferredCaseKey && [...caseSelect.options].some(o => o.value === preferredCaseKey)) {
+      caseSelect.value = preferredCaseKey;
+    } else if ([...caseSelect.options].some(o => o.value === current)) {
       caseSelect.value = current;
     } else if (caseSelect.options.length > 0) {
       caseSelect.value = caseSelect.options[0].value;
     }
+
+    normalizeSelection();
   }
 
   [rwSelect, bsSelect, qdSelect, runtimeSelect, directSelect, fdatasyncSelect, ioengineSelect, mixSelect, sizePolicySelect].forEach(sel => {
@@ -373,14 +482,21 @@ function buildRunsView(doc) {
       renderAll();
     });
   });
-  caseSelect.addEventListener('change', renderAll);
-  document.getElementById('opSelect').addEventListener('change', renderAll);
+  caseSelect.addEventListener('change', () => {
+    normalizeSelection();
+    renderAll();
+  });
+  opSelect.addEventListener('change', () => {
+    const preferred = swapCaseKeyForOp(caseSelect.value, opSelect.value);
+    rebuildCaseOptions(preferred);
+    renderAll();
+  });
   document.getElementById('metricSelect').addEventListener('change', renderAll);
   document.getElementById('latestOnly').addEventListener('change', renderAll);
 
   rebuildCaseOptions();
 
-  return { caseDefs, measurements };
+  return { caseDefs, measurements, caseOps };
 }
 
 let runsDoc = null;
@@ -431,6 +547,50 @@ function renderAll() {
     runsHint.textContent = sig ? `case_key=${caseKey} | ${caseLabel(sig)} | matched systems=${sorted.length}` : `case_key=${caseKey} | matched systems=${sorted.length}`;
   }
 }
+
+tbody.addEventListener('click', async (e) => {
+  const a = e.target.closest('a[data-runid]');
+  if (!a) return;
+  e.preventDefault();
+  if (viewMode !== 'runs') return;
+
+  const runId = a.dataset.runid;
+  try {
+    const res = await fetch(`results/runs/${runId}.json`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`failed to load run: ${res.status}`);
+    const doc = await res.json();
+    const run = doc.run || {};
+    runDetailsTitle.textContent = `${run.system || '(unknown)'} | ${run.timestamp || ''} | ${runId}`;
+    runDetailsMeta.textContent = `engine=${run.engine || '-'} | profile=${run.invoked_profile || '-'} | target_dir=${run.target_dir || '-'}`;
+
+    const rows = [];
+    (doc.cases || []).forEach(c => {
+      const label = caseLabel(c.case || {});
+      const ops = c.ops || {};
+      ['read','write'].forEach(op => {
+        if (!ops[op]) return;
+        rows.push({ case: label, op, ...ops[op] });
+      });
+    });
+
+    runDetailsTbody.innerHTML = '';
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="text-align:left;">${r.case}</td>
+        <td>${r.op}</td>
+        <td>${fmt(r.iops,0)}</td>
+        <td>${fmt(r.bw_mib_s,2)}</td>
+        <td>${fmtLatencyMs(r.clat_p95_ms)}</td>
+        <td>${fmtLatencyMs(r.clat_p99_ms)}</td>`;
+      runDetailsTbody.appendChild(tr);
+    });
+
+    runDetails.style.display = 'block';
+  } catch (err) {
+    console.error(err);
+  }
+});
 
 (async () => {
   try {
