@@ -1,0 +1,321 @@
+{
+  "cases": [
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "libaio",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 120,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "2b465415e3fe4ba92b7c",
+      "fio_json_path": "fio-randwrite-4k-qd1.fio.json",
+      "ops": {
+        "write": {
+          "bw_mib_s": 29.114145278930664,
+          "clat_p95_ms": 0.136192,
+          "clat_p99_ms": 0.224256,
+          "iops": 7453.221223
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "libaio",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 120,
+        "rw": "randread",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "ab0dd2d29378e2187a18",
+      "fio_json_path": "fio-randread-4k-qd1.fio.json",
+      "ops": {
+        "read": {
+          "bw_mib_s": 14.156261444091797,
+          "clat_p95_ms": 0.407552,
+          "clat_p99_ms": 1.056768,
+          "iops": 3624.003133
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "libaio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "4395ae92d1b4283d510a",
+      "fio_json_path": "fio-randwrite-4k-qd4.fio.json",
+      "ops": {
+        "write": {
+          "bw_mib_s": 77.79873275756836,
+          "clat_p95_ms": 0.201728,
+          "clat_p99_ms": 0.577536,
+          "iops": 19916.475696
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "libaio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randread",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "73fc46f7719a2758acbb",
+      "fio_json_path": "fio-randread-4k-qd4.fio.json",
+      "ops": {
+        "read": {
+          "bw_mib_s": 61.09467315673828,
+          "clat_p95_ms": 0.39936,
+          "clat_p99_ms": 0.970752,
+          "iops": 15640.236331
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "libaio",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 120,
+        "rw": "randrw",
+        "rwmixread": 70,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "30a9443d8cdb88683318",
+      "fio_json_path": "fio-randrw70-4k-qd1.fio.json",
+      "ops": {
+        "read": {
+          "bw_mib_s": 13.841550827026367,
+          "clat_p95_ms": 0.37888,
+          "clat_p99_ms": 0.96256,
+          "iops": 3543.437138
+        },
+        "write": {
+          "bw_mib_s": 5.944220542907715,
+          "clat_p95_ms": 0.15872,
+          "clat_p99_ms": 0.25088,
+          "iops": 1521.720652
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "libaio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randrw",
+        "rwmixread": 70,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "0de82d523180adb4f171",
+      "fio_json_path": "fio-randrw70-4k-qd4.fio.json",
+      "ops": {
+        "read": {
+          "bw_mib_s": 55.70008850097656,
+          "clat_p95_ms": 0.403456,
+          "clat_p99_ms": 1.011712,
+          "iops": 14259.22284
+        },
+        "write": {
+          "bw_mib_s": 23.88202667236328,
+          "clat_p95_ms": 0.203776,
+          "clat_p99_ms": 0.403456,
+          "iops": 6113.799052
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "1M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "libaio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "read",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "730d705d2b6591a7e696",
+      "fio_json_path": "fio-seq-read-1m.fio.json",
+      "ops": {
+        "read": {
+          "bw_mib_s": 3446.747533798218,
+          "clat_p95_ms": 25.296896,
+          "clat_p99_ms": 28.442624,
+          "iops": 3446.747534
+        }
+      },
+      "size_effective_bytes": null
+    },
+    {
+      "case": {
+        "bs": "1M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "libaio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "write",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "5a204e94b757ed6b0742",
+      "fio_json_path": "fio-seq-write-1m.fio.json",
+      "ops": {
+        "write": {
+          "bw_mib_s": 2115.340714454651,
+          "clat_p95_ms": 32.11264,
+          "clat_p99_ms": 187.695104,
+          "iops": 2115.340715
+        }
+      },
+      "size_effective_bytes": null
+    },
+    {
+      "case": {
+        "bs": "1M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "libaio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": null,
+        "rw": "write",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 17179869184,
+          "mode": "fixed_or_pct_free",
+          "pct_free": 60
+        },
+        "time_based": 0
+      },
+      "case_key": "e0e613f56515f2c0190d",
+      "fio_json_path": "fio-sustained-write-1m.fio.json",
+      "ops": {
+        "write": {
+          "bw_mib_s": 2155.7894735336304,
+          "clat_p95_ms": 28.966912,
+          "clat_p99_ms": 202.375168,
+          "iops": 2155.789474
+        }
+      },
+      "size_effective_bytes": 17179869184
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "libaio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 600,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 4294967296,
+          "mode": "min_fixed_or_pct_free",
+          "pct_free": 60
+        },
+        "time_based": 1
+      },
+      "case_key": "5b5b43e6583f88d47f00",
+      "fio_json_path": "fio-sustained-randwrite-4k-qd4-10m.fio.json",
+      "ops": {
+        "write": {
+          "bw_mib_s": 58.94463062286377,
+          "clat_p95_ms": 0.292864,
+          "clat_p99_ms": 0.9216,
+          "iops": 15089.825498
+        }
+      },
+      "size_effective_bytes": 4294967296
+    }
+  ],
+  "mode": "update",
+  "repo": "edwardtoday/fio-tests",
+  "run": {
+    "engine": "libaio",
+    "invoked_profile": "full",
+    "out_dir": ".",
+    "run_id": "20251214T134739Z_8690a5643c93ffbe70d0",
+    "system": "Linode-2GB",
+    "system_hash": "8690a5643c93ffbe70d0",
+    "target_dir": ".",
+    "timestamp": "2025-12-14T13:47:39Z",
+    "timestamp_compact": "20251214T134739Z"
+  }
+}
