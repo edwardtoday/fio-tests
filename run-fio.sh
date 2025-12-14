@@ -564,8 +564,12 @@ def sha256_20(data: bytes) -> str:
 def canonical(obj) -> bytes:
   return json.dumps(obj, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
 
+def normalize_ioengine(ioengine: str) -> str:
+  # Treat macOS posixaio and Linux libaio as the same comparable "native aio" case.
+  return "native_aio" if ioengine in ("posixaio", "libaio") else ioengine
+
 def case_key(case_sig: dict) -> str:
-  return sha256_20(b"fio-tests/case/v1\0" + canonical(case_sig))
+  return sha256_20(b"fio-tests/case/v2\0" + canonical(case_sig))
 
 def to_mib_s(bw_bytes: float) -> float:
   return float(bw_bytes) / (1024.0 * 1024.0)
@@ -622,13 +626,16 @@ with open(manifest_path, "r", encoding="utf-8") as f:
     if sp_pct:
       size_policy["pct_free"] = int(sp_pct)
 
+    ioengine_raw = ioengine
+    ioengine_norm = normalize_ioengine(ioengine_raw)
+
     case_sig = {
       "rw": rw,
       "bs": bs,
       "qd": int(qd),
       "numjobs": int(numjobs),
       "direct": int(direct),
-      "ioengine": ioengine,
+      "ioengine": ioengine_norm,
       "fdatasync": int(fdatasync),
       "rwmixread": None if not rwmixread else int(rwmixread),
       "time_based": int(time_based),
@@ -647,6 +654,7 @@ with open(manifest_path, "r", encoding="utf-8") as f:
     cases.append({
       "case_key": case_key(case_sig),
       "case": case_sig,
+      "ioengine_raw": ioengine_raw,
       "size_effective_bytes": None if not size_eff else int(size_eff),
       "fio_json_path": os.path.basename(fio_path),
       "ops": ops,

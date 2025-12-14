@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 from dataclasses import dataclass
@@ -32,6 +33,31 @@ def load_json(path: str) -> Any:
 
 def canonical_json(obj: Any) -> str:
     return json.dumps(obj, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def sha256_20(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()[:20]
+
+
+def normalize_ioengine(ioengine: Any) -> str:
+    v = "" if ioengine is None else str(ioengine)
+    # macOS: posixaio, Linux: libaio. Treat them as the same "native aio" case for cross-OS compare.
+    if v in ("posixaio", "libaio"):
+        return "native_aio"
+    return v
+
+
+def normalize_case_sig(case_sig: Dict[str, Any]) -> Dict[str, Any]:
+    sig = dict(case_sig or {})
+    if "ioengine" in sig:
+        sig["ioengine"] = normalize_ioengine(sig.get("ioengine"))
+    return sig
+
+
+def compute_case_key(case_sig: Dict[str, Any]) -> str:
+    sig_norm = normalize_case_sig(case_sig)
+    payload = canonical_json(sig_norm).encode("utf-8")
+    return sha256_20(b"fio-tests/case/v2\0" + payload)
 
 
 def safe_float(val: Any) -> Optional[float]:
@@ -109,8 +135,9 @@ def aggregate(runs_dir: str) -> Dict[str, Any]:
         )
 
         for case_entry in doc.get("cases") or []:
-            case_key = str(case_entry.get("case_key") or "")
-            case_sig = case_entry.get("case") or {}
+            case_sig_raw = case_entry.get("case") or {}
+            case_sig = normalize_case_sig(case_sig_raw)
+            case_key = compute_case_key(case_sig_raw)
             size_effective_bytes = safe_int(case_entry.get("size_effective_bytes"))
 
             if not case_key:
@@ -168,7 +195,7 @@ def aggregate(runs_dir: str) -> Dict[str, Any]:
 
     return {
         "generated_at": utc_now_iso(),
-        "schema": "fio-tests/data/v2",
+        "schema": "fio-tests/data/v3",
         "runs_dir": os.path.relpath(runs_dir),
         "systems": list(systems.values()),
         "runs": run_rows,
