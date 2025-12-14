@@ -33,6 +33,7 @@
         <select id="opSelect">
           <option value="read" selected>read</option>
           <option value="write">write</option>
+          <option value="auto">auto</option>
         </select>
       </label>
 
@@ -40,6 +41,7 @@
         <select id="viewSelect">
           <option value="by_system" selected>by system</option>
           <option value="history">history (time)</option>
+          <option value="compare">compare</option>
         </select>
       </label>
 
@@ -67,6 +69,36 @@
       <label>case
         <select id="caseSelect" style="min-width: 340px;"></select>
       </label>
+    </div>
+    <div id="compareControls" style="display:none; margin-top: 12px; border-top: 1px dashed #e4e7eb; padding-top: 12px;">
+      <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start;">
+        <label>group by
+          <select id="compareGroupBy">
+            <option value="metric" selected>metric</option>
+            <option value="run">run (system)</option>
+          </select>
+        </label>
+
+        <label>systems (multi)
+          <select id="compareSystems" multiple size="6" style="min-width: 260px;"></select>
+        </label>
+
+        <label>cases (multi)
+          <select id="compareCases" multiple size="6" style="min-width: 520px;"></select>
+        </label>
+
+        <label>metrics (multi)
+          <select id="compareMetrics" multiple size="6" style="min-width: 200px;">
+            <option value="iops">iops</option>
+            <option value="bw_mib_s" selected>bw_mib_s</option>
+            <option value="clat_p95_ms">clat_p95_ms</option>
+            <option value="clat_p99_ms">clat_p99_ms</option>
+          </select>
+        </label>
+      </div>
+      <div style="margin-top: 10px; color:#52606d; font-size: 13px;">
+        compare 默认按 “每个 system × 每个 case/op” 各自选择最新包含该 case 的 run（避免最新一次没跑该 case 导致空值）。
+      </div>
     </div>
     <div id="runsHint" style="margin-top: 10px; color:#52606d; font-size: 13px;"></div>
   </div>
@@ -152,10 +184,45 @@ let viewMode = 'legacy'; // legacy|runs
 let sortKey = 'seq_read_mib_s';
 let sortDir = 'asc';
 let headerCells = [];
+let currentHeaderMode = ''; // legacy|runs|compare
 
 function setHeaders(headers) {
   theadRow.innerHTML = headers.map(h => `<th data-key="${h.key}">${h.label}</th>`).join('');
   headerCells = Array.from(document.querySelectorAll('#results thead th[data-key]'));
+  currentHeaderMode = (viewMode === 'runs') ? 'runs' : 'legacy';
+}
+
+function clearHeadersAndSort() {
+  theadRow.innerHTML = '';
+  headerCells = [];
+  currentHeaderMode = 'compare';
+}
+
+function ensureRunsHeaders() {
+  if (currentHeaderMode === 'runs' && headerCells.length) return;
+  setHeaders([
+    { key: 'system', label: 'system' },
+    { key: 'timestamp', label: 'timestamp' },
+    { key: 'iops', label: 'iops' },
+    { key: 'bw_mib_s', label: 'bw_mib_s' },
+    { key: 'clat_p95_ms', label: 'clat_p95_ms' },
+    { key: 'clat_p99_ms', label: 'clat_p99_ms' }
+  ]);
+  bindSortHandlers();
+}
+
+function ensureLegacyHeaders() {
+  if (currentHeaderMode === 'legacy' && headerCells.length) return;
+  setHeaders([
+    { key: 'device', label: '设备' },
+    { key: 'rand_read_iops', label: '随机读 IOPS' },
+    { key: 'rand_read_bw_mib', label: '随机读 MiB/s' },
+    { key: 'rand_write_iops', label: '随机写 IOPS' },
+    { key: 'rand_write_bw_mib', label: '随机写 MiB/s' },
+    { key: 'seq_read_mib_s', label: '顺序读 MiB/s' },
+    { key: 'seq_write_mib_s', label: '顺序写 MiB/s' }
+  ]);
+  bindSortHandlers();
 }
 
 function bindSortHandlers() {
@@ -212,6 +279,22 @@ function renderTable(sorted) {
         <td>${fmtLatencyMs(d.clat_p99_ms)}</td>`;
     }
     tbody.appendChild(tr);
+  });
+}
+
+function getSelectedValues(select) {
+  return Array.from(select.selectedOptions).map(o => o.value).filter(v => v !== '');
+}
+
+function setMultiSelectOptions(select, values, selectedValues=[]) {
+  const selected = new Set(selectedValues);
+  select.innerHTML = '';
+  values.forEach(v => {
+    const o = document.createElement('option');
+    o.value = String(v);
+    o.textContent = String(v);
+    o.selected = selected.has(String(v));
+    select.appendChild(o);
   });
 }
 
@@ -437,6 +520,11 @@ function buildRunsView(doc) {
   const opSelect = document.getElementById('opSelect');
   const viewSelect = document.getElementById('viewSelect');
   const systemSelect = document.getElementById('systemSelect');
+  const compareControls = document.getElementById('compareControls');
+  const compareGroupBy = document.getElementById('compareGroupBy');
+  const compareSystems = document.getElementById('compareSystems');
+  const compareCases = document.getElementById('compareCases');
+  const compareMetrics = document.getElementById('compareMetrics');
 
   const sigs = Object.values(caseDefs);
   setSelectOptions(rwSelect, uniqSorted(sigs.map(s => s.rw)));
@@ -449,6 +537,61 @@ function buildRunsView(doc) {
   setSelectOptions(mixSelect, uniqSorted(sigs.map(s => s.rwmixread)));
   setSelectOptions(sizePolicySelect, uniqSorted(sigs.map(s => s.size_policy?.mode)));
   setSelectOptions(systemSelect, uniqSorted(measurements.map(m => m.system)), '(all)');
+
+  function rebuildCompareOptions() {
+    // systems: default select all
+    const allSystems = uniqSorted(measurements.map(m => m.system));
+    const selectedSystems = getSelectedValues(compareSystems);
+    setMultiSelectOptions(compareSystems, allSystems, selectedSystems.length ? selectedSystems : allSystems);
+
+    // cases: based on current signature filters + current op selection
+    const rw = rwSelect.value;
+    const bs = bsSelect.value;
+    const qd = qdSelect.value;
+    const rt = runtimeSelect.value;
+    const direct = directSelect.value;
+    const fd = fdatasyncSelect.value;
+    const engine = ioengineSelect.value;
+    const mix = mixSelect.value;
+    const sp = sizePolicySelect.value;
+    const selectedOp = opSelect.value;
+
+    const entries = Object.entries(caseDefs)
+      .filter(([caseKey, sig]) =>
+        matchesFilter(sig, 'rw', rw) &&
+        matchesFilter(sig, 'bs', bs) &&
+        matchesFilter(sig, 'qd', qd) &&
+        matchesFilter(sig, 'runtime_s', rt) &&
+        matchesFilter(sig, 'direct', direct) &&
+        matchesFilter(sig, 'fdatasync', fd) &&
+        matchesFilter(sig, 'ioengine', engine) &&
+        matchesFilter(sig, 'rwmixread', mix) &&
+        (sp ? String(sig.size_policy?.mode || '') === String(sp) : true) &&
+        // op=read/write 时，至少存在对应 op；op=auto 时只要有任意 op 即可
+        (selectedOp ? (caseOps.get(caseKey)?.has(selectedOp) || selectedOp === 'auto') : true)
+      )
+      .map(([ck, sig]) => ({ ck, label: caseLabel(sig) }))
+      .sort((a,b) => a.label.localeCompare(b.label));
+
+    const selectedCases = getSelectedValues(compareCases);
+    compareCases.innerHTML = '';
+    entries.forEach(e => {
+      const o = document.createElement('option');
+      o.value = e.ck;
+      o.textContent = e.label;
+      o.selected = selectedCases.length ? selectedCases.includes(e.ck) : false;
+      compareCases.appendChild(o);
+    });
+    // Default select current case if nothing selected
+    if (!selectedCases.length && caseSelect.value && compareCases.querySelector(`option[value="${caseSelect.value}"]`)) {
+      compareCases.querySelector(`option[value="${caseSelect.value}"]`).selected = true;
+    }
+
+    // metrics: keep current selection or default bw_mib_s
+    if (!Array.from(compareMetrics.selectedOptions).length) {
+      Array.from(compareMetrics.options).forEach(o => { o.selected = (o.value === 'bw_mib_s'); });
+    }
+  }
 
   function swapCaseKeyForOp(caseKey, wantOp) {
     const sig = caseDefs[caseKey];
@@ -536,29 +679,42 @@ function buildRunsView(doc) {
   [rwSelect, bsSelect, qdSelect, runtimeSelect, directSelect, fdatasyncSelect, ioengineSelect, mixSelect, sizePolicySelect].forEach(sel => {
     sel.addEventListener('change', () => {
       rebuildCaseOptions();
+      rebuildCompareOptions();
       renderAll();
     });
   });
   caseSelect.addEventListener('change', () => {
     normalizeSelection();
+    rebuildCompareOptions();
     renderAll();
   });
   opSelect.addEventListener('change', () => {
     const preferred = swapCaseKeyForOp(caseSelect.value, opSelect.value);
     rebuildCaseOptions(preferred);
+    rebuildCompareOptions();
     renderAll();
   });
   viewSelect.addEventListener('change', () => {
-    // history 模式下没有 “latestOnly” 的意义，强制展示全量历史
+    // history/compare 模式下没有 “latestOnly” 的意义，强制展示全量历史
     const latestOnly = document.getElementById('latestOnly');
     if (viewSelect.value === 'history') latestOnly.checked = false;
+    if (viewSelect.value === 'compare') latestOnly.checked = false;
+    // op=auto 仅用于 compare；离开 compare 时回到 read，避免普通 case 比较出现空表
+    if (viewSelect.value !== 'compare' && opSelect.value === 'auto') opSelect.value = 'read';
+    compareControls.style.display = (viewSelect.value === 'compare') ? 'block' : 'none';
+    rebuildCompareOptions();
     renderAll();
   });
   systemSelect.addEventListener('change', renderAll);
   document.getElementById('metricSelect').addEventListener('change', renderAll);
   document.getElementById('latestOnly').addEventListener('change', renderAll);
 
+  [compareGroupBy, compareSystems, compareCases, compareMetrics].forEach(sel => {
+    sel.addEventListener('change', renderAll);
+  });
+
   rebuildCaseOptions();
+  rebuildCompareOptions();
 
   return { caseDefs, measurements, caseOps };
 }
@@ -602,7 +758,152 @@ function buildRunsRows() {
   return Array.from(best.values());
 }
 
+function pickLatestBySystemCaseOp(measurements, systems, caseOpsWanted) {
+  const best = new Map();
+  const sysSet = new Set(systems);
+  const caseOpSet = new Set(caseOpsWanted.map(x => `${x.case_key}|${x.op}`));
+  measurements.forEach(m => {
+    if (!sysSet.has(m.system)) return;
+    const key2 = `${m.case_key}|${m.op}`;
+    if (!caseOpSet.has(key2)) return;
+    const key = `${m.system}|${m.case_key}|${m.op}`;
+    const prev = best.get(key);
+    if (!prev || (m.timestamp > prev.timestamp) || (m.timestamp === prev.timestamp && m.run_id > prev.run_id)) {
+      best.set(key, m);
+    }
+  });
+  return best;
+}
+
+function buildCompareModel() {
+  const groupBy = document.getElementById('compareGroupBy').value;
+  const systemsSel = document.getElementById('compareSystems');
+  const casesSel = document.getElementById('compareCases');
+  const metricsSel = document.getElementById('compareMetrics');
+
+  const systems = getSelectedValues(systemsSel);
+  const caseKeys = getSelectedValues(casesSel);
+  const metrics = getSelectedValues(metricsSel);
+
+  const opMode = document.getElementById('opSelect').value;
+
+  const caseOpsWanted = [];
+  caseKeys.forEach(ck => {
+    const ops = Array.from(runsView.caseOps.get(ck) || []);
+    if (ops.length === 0) return;
+    const include = (want) => ops.includes(want) && caseOpsWanted.push({ case_key: ck, op: want });
+
+    if (opMode === 'read') include('read');
+    else if (opMode === 'write') include('write');
+    else {
+      // auto behavior: single-op cases use that op; mixed cases include both
+      if (ops.length === 1) include(ops[0]);
+      else {
+        include('read');
+        include('write');
+      }
+    }
+  });
+
+  const systemsFinal = systems.length ? systems : Array.from(new Set(runsView.measurements.map(m => m.system))).sort((a,b)=>a.localeCompare(b,'zh-Hans'));
+  const metricsFinal = metrics.length ? metrics : ['bw_mib_s'];
+
+  const latest = pickLatestBySystemCaseOp(runsView.measurements, systemsFinal, caseOpsWanted);
+
+  const caseOpLabels = caseOpsWanted.map(x => {
+    const sig = runsView.caseDefs[x.case_key] || {};
+    const base = caseLabel(sig);
+    const ops = Array.from(runsView.caseOps.get(x.case_key) || []);
+    const suffix = ops.length > 1 ? ` | ${x.op}` : '';
+    return { ...x, label: base + suffix };
+  });
+
+  return { groupBy, systems: systemsFinal, caseOpsWanted: caseOpLabels, metrics: metricsFinal, latest };
+}
+
+function renderCompare() {
+  const model = buildCompareModel();
+  // Hide chart for now in compare mode (tables are the primary presentation)
+  bwCanvas.style.height = '80px';
+  if (bwChart) {
+    bwChart.data.labels = [];
+    bwChart.data.datasets.forEach(ds => ds.data = []);
+    bwChart.update();
+  }
+
+  const groupBy = model.groupBy;
+
+  // Compare uses its own table rendering; disable table header sort.
+  clearHeadersAndSort();
+
+  const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  tbody.innerHTML = '';
+
+  if (groupBy === 'run') {
+    model.systems.forEach(system => {
+      const trTitle = document.createElement('tr');
+      trTitle.innerHTML = `<td colspan="999" style="text-align:left; font-weight:600; background:#f8fafc;">${esc(system)}</td>`;
+      tbody.appendChild(trTitle);
+
+      const trHead = document.createElement('tr');
+      trHead.innerHTML = `<td style="text-align:left;">case</td>` + model.metrics.map(m => `<td>${esc(m)}</td>`).join('');
+      tbody.appendChild(trHead);
+
+      model.caseOpsWanted.forEach(co => {
+        const m = model.latest.get(`${system}|${co.case_key}|${co.op}`);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td style="text-align:left;">${esc(co.label)}</td>` + model.metrics.map(metric => {
+          if (!m) return `<td>-</td>`;
+          const v = m[metric];
+          const txt = (metric.startsWith('clat_')) ? fmtLatencyMs(v) : (metric === 'iops' ? fmt(v,0) : fmt(v,2));
+          const tip = `run_id=${m.run_id}\\n${m.timestamp}`;
+          return `<td title="${esc(tip)}">${esc(txt)}</td>`;
+        }).join('');
+        tbody.appendChild(tr);
+      });
+    });
+  } else {
+    // group by metric
+    model.metrics.forEach(metric => {
+      const trTitle = document.createElement('tr');
+      trTitle.innerHTML = `<td colspan="999" style="text-align:left; font-weight:600; background:#f8fafc;">metric: ${esc(metric)}</td>`;
+      tbody.appendChild(trTitle);
+
+      const trHead = document.createElement('tr');
+      trHead.innerHTML = `<td style="text-align:left;">system</td>` + model.caseOpsWanted.map(co => `<td>${esc(co.label)}</td>`).join('');
+      tbody.appendChild(trHead);
+
+      model.systems.forEach(system => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td style="text-align:left;">${esc(system)}</td>` + model.caseOpsWanted.map(co => {
+          const m = model.latest.get(`${system}|${co.case_key}|${co.op}`);
+          if (!m) return `<td>-</td>`;
+          const v = m[metric];
+          const txt = (metric.startsWith('clat_')) ? fmtLatencyMs(v) : (metric === 'iops' ? fmt(v,0) : fmt(v,2));
+          const tip = `run_id=${m.run_id}\\n${m.timestamp}`;
+          return `<td title="${esc(tip)}">${esc(txt)}</td>`;
+        }).join('');
+        tbody.appendChild(tr);
+      });
+    });
+  }
+
+  const sysCount = model.systems.length;
+  const caseCount = model.caseOpsWanted.length;
+  const metricCount = model.metrics.length;
+  runsHint.textContent = `compare | group_by=${groupBy} | systems=${sysCount} | cases(op)=${caseCount} | metrics=${metricCount}`;
+}
+
 function renderAll() {
+  if (viewMode === 'runs' && document.getElementById('viewSelect')?.value === 'compare') {
+    renderCompare();
+    return;
+  }
+
+  if (viewMode === 'runs') ensureRunsHeaders();
+  if (viewMode === 'legacy') ensureLegacyHeaders();
+
   const rows = (viewMode === 'legacy') ? data : buildRunsRows();
   const sorted = sortData(rows);
   renderTable(sorted);
