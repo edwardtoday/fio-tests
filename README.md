@@ -35,6 +35,14 @@ Profile：
 curl -fsSL https://raw.githubusercontent.com/edwardtoday/fio-tests/refs/heads/main/run-fio.sh | bash -s -- --profile quick .
 ```
 
+如需上传（`curl | bash` 场景建议显式提供系统名；否则脚本会尝试从 `/dev/tty` 交互读取，或从 `FIO_TESTS_SYSTEM` 读取）：
+
+```sh
+FIO_TESTS_WEBHOOK_URL='https://n8n.sansi.io/webhook/fio-tests-372bba2a-faab-4927-b839-f8e7a1e0d7b5' \
+FIO_TESTS_WEBHOOK_SECRET='<secret>' \
+curl -fsSL https://raw.githubusercontent.com/edwardtoday/fio-tests/refs/heads/main/run-fio.sh | bash -s -- --profile full --upload --system 'Your-System-Name' .
+```
+
 需要 sudo（当前目录无写权限或需要直写设备）：
 
 ```sh

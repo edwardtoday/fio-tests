@@ -18,6 +18,7 @@ UPLOAD_CHOICE="ask" # ask|yes|no
 UPLOAD_MODE=""      # update|create (optional, used only when uploading)
 WEBHOOK_URL="${FIO_TESTS_WEBHOOK_URL:-}"
 WEBHOOK_SECRET="${FIO_TESTS_WEBHOOK_SECRET:-}"
+SYSTEM_NAME_ENV="${FIO_TESTS_SYSTEM:-}"
 UPLOAD_REPO="edwardtoday/fio-tests"
 EMIT_RUN_JSON="yes"
 
@@ -89,8 +90,17 @@ if [[ "${UPLOAD_CHOICE}" == "yes" && -z "${SYSTEM_NAME}" && -t 0 ]]; then
   read -r -p "被测系统名称（必填）： " SYSTEM_NAME || true
 fi
 
+if [[ "${UPLOAD_CHOICE}" == "yes" && -z "${SYSTEM_NAME}" && -n "${SYSTEM_NAME_ENV}" ]]; then
+  SYSTEM_NAME="${SYSTEM_NAME_ENV}"
+fi
+
+if [[ "${UPLOAD_CHOICE}" == "yes" && -z "${SYSTEM_NAME}" && ! -t 0 && -r /dev/tty ]]; then
+  # curl | bash 会导致 stdin 非 TTY，这里改用 /dev/tty 读交互输入
+  read -r -p "被测系统名称（必填）： " SYSTEM_NAME </dev/tty || true
+fi
+
 if [[ "${UPLOAD_CHOICE}" == "yes" && -z "${SYSTEM_NAME}" ]]; then
-  echo "ERROR: upload requested but system name is empty" >&2
+  echo "ERROR: upload requested but system name is empty; pass --system, or set FIO_TESTS_SYSTEM, or run with an interactive TTY" >&2
   exit 2
 fi
 
