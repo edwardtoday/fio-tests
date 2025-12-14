@@ -504,6 +504,9 @@ echo "  ${manifest_path}"
 ls -1 "${OUT_DIR}"/fio-*.fio.json 2>/dev/null | sed 's/^/  /' || true
 
 if [[ "${UPLOAD_CHOICE}" == "yes" ]]; then
+  if [[ -z "${WEBHOOK_URL}" && "${UPLOAD_REPO}" == "edwardtoday/fio-tests" ]]; then
+    WEBHOOK_URL="https://n8n.sansi.io/webhook/fio-tests-372bba2a-faab-4927-b839-f8e7a1e0d7b5"
+  fi
   if [[ -z "${WEBHOOK_URL}" ]]; then
     echo "ERROR: upload requested but webhook url not set; use --webhook-url or env FIO_TESTS_WEBHOOK_URL" >&2
     exit 3
