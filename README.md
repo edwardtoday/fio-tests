@@ -38,13 +38,16 @@ curl -fsSL https://raw.githubusercontent.com/edwardtoday/fio-tests/refs/heads/ma
 如需上传（`curl | bash` 场景建议显式提供系统名；否则脚本会尝试从 `/dev/tty` 交互读取，或从 `FIO_TESTS_SYSTEM` 读取）：
 
 ```sh
-FIO_TESTS_WEBHOOK_SECRET='<secret>' \
-curl -fsSL https://raw.githubusercontent.com/edwardtoday/fio-tests/refs/heads/main/run-fio.sh | bash -s -- --profile full --upload --system 'Your-System-Name' .
+curl -fsSL https://raw.githubusercontent.com/edwardtoday/fio-tests/refs/heads/main/run-fio.sh | \
+env FIO_TESTS_WEBHOOK_SECRET='<secret>' \
+bash -s -- --profile full --upload --system 'Your-System-Name' .
 ```
 
 注意：示例中的 URL 不要加尖括号（`<...>`），否则会被 shell 当作重定向导致语法错误。
 
 说明：当 `--repo` 为默认值 `edwardtoday/fio-tests` 且未设置 `FIO_TESTS_WEBHOOK_URL` 时，脚本会使用默认 webhook URL；如你 fork 了仓库或使用自建 n8n，请显式设置 `FIO_TESTS_WEBHOOK_URL` 或使用 `--webhook-url`。
+
+注意：在 `cmd1 | cmd2` 这种管道里，把 `FIO_TESTS_WEBHOOK_SECRET=...` 写在 `curl` 前面只会影响 `curl` 进程，不会传递给 `bash`；请按上面的写法用 `env ... bash` 或者提前 `export FIO_TESTS_WEBHOOK_SECRET=...`。
 
 如遇 SSH 断线等原因导致脚本中断，但目录里已经生成了 `fio-manifest-*.tsv` 与 `fio-*.fio.json`，可用 `--finalize-only` 重新生成 `fio-run-*.json` 并上传（不会重跑 fio）：
 
@@ -64,7 +67,9 @@ curl -fsSL https://raw.githubusercontent.com/edwardtoday/fio-tests/refs/heads/ma
 
 ```sh
 FIO_TESTS_WEBHOOK_URL='https://your-n8n/webhook/...' \
-curl -fsSL https://raw.githubusercontent.com/edwardtoday/fio-tests/refs/heads/main/run-fio.sh | bash -s -- --profile quick --upload --system 'Your-System-Name' .
+curl -fsSL https://raw.githubusercontent.com/edwardtoday/fio-tests/refs/heads/main/run-fio.sh | \
+env FIO_TESTS_WEBHOOK_SECRET='<secret>' \
+bash -s -- --profile quick --upload --system 'Your-System-Name' .
 ```
 
 备用脚本地址（Linode Object Storage）：
