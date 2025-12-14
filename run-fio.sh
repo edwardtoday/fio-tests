@@ -171,6 +171,8 @@ standard_size_for_random="1G"
 standard_runtime_s=120
 seq_runtime_s_standard=120
 
+short_sustained_randwrite_runtime_s=180
+
 run_ts_compact="$(date -u +%Y%m%dT%H%M%SZ)"
 run_ts_iso="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
@@ -266,6 +268,13 @@ run_seq() {
   append_manifest "${out}" "${rw}" "${bs}" "${qd}" "1" "1" "${ENGINE}" "0" "" "1" "${runtime}" "fixed" "$((1024*1024*1024))" "" ""
 }
 
+run_sustained_randwrite_short() {
+  # short sustained randwrite: 3 minutes, fixed 1G working set, QD4.
+  local out; out="$(json_path "sustained-randwrite-4k-qd4-3m")"
+  run_json "fio --filename='${FILENAME}' --size=${standard_size_for_random} --direct=1 --rw=randwrite --bs=4k --ioengine=${ENGINE} --iodepth=4 --runtime=${short_sustained_randwrite_runtime_s} --numjobs=1 --time_based --group_reporting --name=sustained-randwrite-4k-qd4-3m --eta-newline=1" "${out}"
+  append_manifest "${out}" "randwrite" "4k" "4" "1" "1" "${ENGINE}" "0" "" "1" "${short_sustained_randwrite_runtime_s}" "fixed" "$((1024*1024*1024))" "" "$((1024*1024*1024))"
+}
+
 run_fsync() {
   local rw="$1" bs="$2" qd="$3" runtime="$4" size="$5" name="$6"
   # Buffered + sync engine + fdatasync is closer to DB "write + fsync" path than O_DIRECT/libaio.
@@ -280,22 +289,31 @@ run_quick() {
   run_rand "randread"  "4k" 1 "${standard_runtime_s}" "${standard_size_for_random}" "randread-4k-qd1"
   run_seq "read"  "1M" 64 "${seq_runtime_s_standard}" "seq-read-1m"
   run_seq "write" "1M" 64 "${seq_runtime_s_standard}" "seq-write-1m"
+  run_sustained_randwrite_short
 }
 
 run_standard() {
-  # 4K randread/randwrite @ QD1 + QD4
-  run_rand "randwrite" "4k" 1 "${standard_runtime_s}" "${standard_size_for_random}" "randwrite-4k-qd1"
-  run_rand "randread"  "4k" 1 "${standard_runtime_s}" "${standard_size_for_random}" "randread-4k-qd1"
-  run_rand "randwrite" "4k" 4 "${standard_runtime_s}" "${standard_size_for_random}" "randwrite-4k-qd4"
-  run_rand "randread"  "4k" 4 "${standard_runtime_s}" "${standard_size_for_random}" "randread-4k-qd4"
+  local qd
+  # 4K randread/randwrite @ QD1/QD4/QD16/QD32
+  for qd in 1 4 16 32; do
+    run_rand "randwrite" "4k" "${qd}" "${standard_runtime_s}" "${standard_size_for_random}" "randwrite-4k-qd${qd}"
+    run_rand "randread"  "4k" "${qd}" "${standard_runtime_s}" "${standard_size_for_random}" "randread-4k-qd${qd}"
+  done
 
   # 4K randrw 70/30 @ QD1 + QD4
   run_randrw_mix 70 "4k" 1 "${standard_runtime_s}" "${standard_size_for_random}" "randrw70-4k-qd1"
   run_randrw_mix 70 "4k" 4 "${standard_runtime_s}" "${standard_size_for_random}" "randrw70-4k-qd4"
 
-  # 1M sequential read/write
+  # Sequential read/write (larger block sizes)
+  run_seq "read"  "128k" 64 "${seq_runtime_s_standard}" "seq-read-128k"
+  run_seq "write" "128k" 64 "${seq_runtime_s_standard}" "seq-write-128k"
   run_seq "read"  "1M" 64 "${seq_runtime_s_standard}" "seq-read-1m"
   run_seq "write" "1M" 64 "${seq_runtime_s_standard}" "seq-write-1m"
+  run_seq "read"  "4M" 64 "${seq_runtime_s_standard}" "seq-read-4m"
+  run_seq "write" "4M" 64 "${seq_runtime_s_standard}" "seq-write-4m"
+
+  # Short sustained random write (3min) for quick checks and comparability.
+  run_sustained_randwrite_short
 }
 
 run_full() {
@@ -331,6 +349,16 @@ run_full() {
     run_json "fio --filename='${FILENAME}' --size=${rand_size} --direct=1 --rw=randwrite --bs=4k --ioengine=${ENGINE} --iodepth=4 --runtime=600 --numjobs=1 --time_based --group_reporting --name=sustained-randwrite-4k-qd4-10m --eta-newline=1" "${out}"
     append_manifest "${out}" "randwrite" "4k" "4" "1" "1" "${ENGINE}" "0" "" "1" "600" "min_fixed_or_pct_free" "${size4g}" "60" "${rand_size}"
   fi
+
+  # DB-like additions (buffered + fdatasync; and 8K/16K random @QD1/QD4).
+  local bs qd
+  for bs in 8k 16k; do
+    for qd in 1 4; do
+      run_rand "randwrite" "${bs}" "${qd}" "${standard_runtime_s}" "${standard_size_for_random}" "dblike-randwrite-${bs}-qd${qd}"
+      run_rand "randread"  "${bs}" "${qd}" "${standard_runtime_s}" "${standard_size_for_random}" "dblike-randread-${bs}-qd${qd}"
+    done
+  done
+  run_fsync "write" "4k" 1 60 "1G" "dblike-fdatasync-write-4k-qd1"
 }
 
 run_db() {
