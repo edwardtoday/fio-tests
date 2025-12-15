@@ -50,6 +50,9 @@
     .drawerHeader { position: sticky; top: 0; background: var(--card); z-index: 1; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
     .drawerHeader .muted { color: var(--muted); font-size: 13px; margin-top: 8px; }
     .groupRow td { text-align: left; font-weight: 600; background: #f8fafc; color: var(--text); }
+    .notice { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: #fff; box-shadow: var(--shadow); font-size: 13px; color: var(--text); }
+    .noticeWarn { border-color: rgba(245, 158, 11, 0.45); background: rgba(245, 158, 11, 0.08); }
+    .noticeOk { border-color: rgba(16, 185, 129, 0.45); background: rgba(16, 185, 129, 0.08); }
     @media (max-width: 720px) {
       .drawer { left: 12px; right: 12px; width: auto; top: 64px; bottom: 12px; }
     }
@@ -184,8 +187,9 @@
 	        对比模式会按“每个系统 × 每个用例/读写”各自选择最新包含该用例的运行记录（避免最新一次没跑该用例导致空值）。
 	      </div>
 	    </div>
-    <div id="runsHint" style="margin-top: 10px; color:#52606d; font-size: 13px;"></div>
-  </div>
+	    <div id="runsHint" style="margin-top: 10px; color:#52606d; font-size: 13px;"></div>
+	    <div id="comparabilityHint" class="notice" style="display:none; margin-top: 10px;"></div>
+	  </div>
 
 	  <table id="results">
 	    <thead>
@@ -436,6 +440,9 @@ const I18N = {
     diff_b: 'B',
     diff_delta: '差值',
     diff_pct: '变化率',
+    comparability_ok: '当前选择口径一致（可横向对比）。',
+    comparability_warn: '当前选择混合了多种口径，横向对比可能误导：',
+    comparability_fields: '差异字段',
     engine: '引擎',
     profile: 'profile',
     target_dir: 'target_dir',
@@ -555,6 +562,9 @@ const I18N = {
     diff_b: 'B',
     diff_delta: 'Δ',
     diff_pct: 'Δ%',
+    comparability_ok: 'Current selection is comparable.',
+    comparability_warn: 'Mixed comparability signature detected:',
+    comparability_fields: 'Fields',
     engine: 'engine',
     profile: 'profile',
     target_dir: 'target_dir',
@@ -581,6 +591,59 @@ function opLabel(op) {
   if (op === 'write') return t('op_write');
   if (op === 'auto') return t('op_auto');
   return String(op);
+}
+
+function renderComparabilityHint(caseKeys) {
+  if (!comparabilityHint) return;
+  if (viewMode !== 'runs' || !runsView) {
+    comparabilityHint.style.display = 'none';
+    return;
+  }
+  const keys = Array.isArray(caseKeys) ? caseKeys.filter(Boolean) : [];
+  if (keys.length <= 1) {
+    comparabilityHint.style.display = 'none';
+    return;
+  }
+
+  const fields = [
+    { key: 'rw', label: 'rw', get: (sig) => sig.rw },
+    { key: 'bs', label: 'bs', get: (sig) => sig.bs },
+    { key: 'qd', label: 'qd', get: (sig) => sig.qd },
+    { key: 'runtime_s', label: 'runtime_s', get: (sig) => sig.runtime_s },
+    { key: 'direct', label: 'direct', get: (sig) => sig.direct },
+    { key: 'fdatasync', label: 'fdatasync', get: (sig) => sig.fdatasync },
+    { key: 'ioengine', label: 'ioengine', get: (sig) => sig.ioengine },
+    { key: 'rwmixread', label: 'rwmixread', get: (sig) => sig.rwmixread },
+    { key: 'size_policy', label: 'size_policy', get: (sig) => sig.size_policy?.mode },
+  ];
+
+  const diffs = [];
+  fields.forEach(f => {
+    const s = new Set();
+    keys.forEach(ck => {
+      const sig = runsView.caseDefs?.[ck] || {};
+      const v = f.get(sig);
+      s.add(String(v));
+    });
+    if (s.size > 1) {
+      const vals = Array.from(s).sort((a,b)=>a.localeCompare(b,'zh-Hans'));
+      diffs.push({ key: f.key, label: f.label, values: vals });
+    }
+  });
+
+  if (diffs.length === 0) {
+    comparabilityHint.className = 'notice noticeOk';
+    comparabilityHint.textContent = t('comparability_ok');
+    comparabilityHint.style.display = 'block';
+    return;
+  }
+
+  comparabilityHint.className = 'notice noticeWarn';
+  const text = `${t('comparability_warn')} ${t('comparability_fields')}: ` + diffs
+    .map(d => `${d.label}=[${d.values.join(', ')}]`)
+    .join('；');
+  comparabilityHint.textContent = text;
+  comparabilityHint.style.display = 'block';
 }
 
 function openSystemDetails(system) {
@@ -1087,6 +1150,7 @@ function almostEqual(a, b) {
 
 const runsControls = document.getElementById('runsControls');
 const runsHint = document.getElementById('runsHint');
+const comparabilityHint = document.getElementById('comparabilityHint');
 const tbody = document.querySelector('#results tbody');
 const theadRow = document.querySelector('#results thead tr');
 
@@ -2305,12 +2369,14 @@ function renderCompare() {
   const metricCount = model.metrics.length;
   const groupByText = (groupBy === 'metric') ? t('compare_group_by_metric') : t('compare_group_by_run');
   runsHint.textContent = `${t('compare_hint')} | ${t('compare_group_by_label')}=${groupByText} | ${t('compare_systems_label')}=${sysCount} | ${t('compare_cases_label')}=${caseCount} | ${t('compare_metrics_label')}=${metricCount}`;
+
+  renderComparabilityHint(model.caseOpsWanted.map(x => x.case_key));
+  syncStateToHash();
 }
 
 function renderAll() {
   if (viewMode === 'runs' && (layoutMode === 'matrix' || document.getElementById('viewSelect')?.value === 'compare')) {
     renderCompare();
-    syncStateToHash();
     return;
   }
 
@@ -2347,6 +2413,8 @@ function renderAll() {
     }
   }
 
+  // 非 compare 场景，通常已经锁定到单一 case_key，默认不展示可比性提示。
+  if (comparabilityHint) comparabilityHint.style.display = 'none';
   syncStateToHash();
 }
 
