@@ -79,6 +79,8 @@ bash -s -- --profile quick --upload --system 'Your-System-Name' .
 - HTTPS：`https://us-east-1.linodeobjects.com/sansi-share/2025/run-fio.sh`
 - HTTP（兼容 Amazon Linux 1 这种 curl 不支持 https 的环境）：`http://us-east-1.linodeobjects.com/sansi-share/2025/run-fio.sh`
 
+仓库在每次 push 后会通过 GitHub Actions 自动把 `run-fio.sh` 同步到上述 Linode Object Storage 地址（需在仓库 Secrets 配置 `LINODE_OBJECT_STORAGE_ACCESS_KEY` / `LINODE_OBJECT_STORAGE_SECRET_KEY`）。
+
 Amazon Linux 1 (AL AMI 2018.03) 如遇 `curl: (1) Protocol "https" not supported or disabled in libcurl`：
 
 ```sh

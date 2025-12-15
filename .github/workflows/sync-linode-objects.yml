@@ -1,0 +1,44 @@
+name: Sync scripts to Linode Object Storage
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - run-fio.sh
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    # Only run on the canonical repo; forks can enable by adjusting this.
+    if: ${{ github.repository == 'edwardtoday/fio-tests' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate secrets
+        run: |
+          if [ -z "${LINODE_OBJECT_STORAGE_ACCESS_KEY:-}" ] || [ -z "${LINODE_OBJECT_STORAGE_SECRET_KEY:-}" ]; then
+            echo "Missing secrets: LINODE_OBJECT_STORAGE_ACCESS_KEY / LINODE_OBJECT_STORAGE_SECRET_KEY"
+            exit 1
+          fi
+        env:
+          LINODE_OBJECT_STORAGE_ACCESS_KEY: ${{ secrets.LINODE_OBJECT_STORAGE_ACCESS_KEY }}
+          LINODE_OBJECT_STORAGE_SECRET_KEY: ${{ secrets.LINODE_OBJECT_STORAGE_SECRET_KEY }}
+
+      - name: Upload run-fio.sh
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.LINODE_OBJECT_STORAGE_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.LINODE_OBJECT_STORAGE_SECRET_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+        run: |
+          set -euo pipefail
+          aws --version
+          aws s3 cp ./run-fio.sh s3://sansi-share/2025/run-fio.sh \
+            --endpoint-url https://us-east-1.linodeobjects.com \
+            --acl public-read \
+            --content-type text/x-shellscript \
+            --cache-control "max-age=60"
