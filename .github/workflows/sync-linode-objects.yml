@@ -70,7 +70,6 @@ jobs:
           echo "uploading..."
           aws s3 cp ./run-fio.sh "s3://${bucket}/${key}" \
             --endpoint-url "${endpoint}" \
-            --acl public-read \
             --content-type text/x-shellscript \
             --cache-control "max-age=60"
           echo "done"
