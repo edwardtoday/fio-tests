@@ -14,16 +14,16 @@
 
 ### M1.0 基础设施（导航与状态）
 
-- [ ] M1.0.1 新增“system 详情面板/页面”入口（从主表点击 system 打开）
+- [x] M1.0.1 新增“system 详情面板/页面”入口（从主表点击 system 打开）
   - 验收：任意 system 单元格点击后，出现详情视图；可返回主视图
-- [ ] M1.0.2 system 详情与 URL 状态联动（可分享链接直达 system 详情）
+- [x] M1.0.2 system 详情与 URL 状态联动（可分享链接直达 system 详情）
   - 验收：复制链接后在新窗口打开，自动进入同一 system 详情视图
-- [ ] M1.0.3 system 详情与语言切换联动（中/英一致）
+- [x] M1.0.3 system 详情与语言切换联动（中/英一致）
   - 验收：切换语言后详情视图所有文案一致切换
 
 ### M1.1 Latest 全量表（核心交付）
 
-- [ ] M1.1.1 生成某 system 的 “latest per case/op” 全量列表
+- [x] M1.1.1 生成某 system 的 “latest per case/op” 全量列表
   - 说明：latest 定义为“该 system 对每个 case_key/op 选择最新包含该 case 的 run”
   - 验收：同一 system 在页面能看到其全部 case 的最新值（含 iops/bw/p95/p99）
 - [ ] M1.1.2 全量表分组展示（至少：随机、顺序、落盘、持续写）
@@ -72,4 +72,3 @@
 - [ ] M4.0.1 data.json 索引增强（前端无需全量遍历）
 - [ ] M4.0.2 前端按需加载 run.json（点击详情才加载）
 - [ ] M4.0.3 history/compare 大表分页或虚拟列表
-

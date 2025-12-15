@@ -194,13 +194,13 @@
     <tbody></tbody>
   </table>
 
-	  <div id="runDetails" class="card" style="display:none; margin: 16px 0; padding: 12px;">
-	    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 8px;">
-	      <div id="runDetailsTitle" style="font-weight: 600;"></div>
-	      <button id="runDetailsClose" type="button" data-i18n="close">关闭</button>
-	    </div>
-	    <div id="runDetailsMeta" style="color:#52606d; font-size: 13px; margin-bottom: 10px;"></div>
-	    <table id="runDetailsTable" style="margin: 0;">
+		  <div id="runDetails" class="card" style="display:none; margin: 16px 0; padding: 12px;">
+		    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 8px;">
+		      <div id="runDetailsTitle" style="font-weight: 600;"></div>
+		      <button id="runDetailsClose" type="button" data-i18n="close">关闭</button>
+		    </div>
+		    <div id="runDetailsMeta" style="color:#52606d; font-size: 13px; margin-bottom: 10px;"></div>
+		    <table id="runDetailsTable" style="margin: 0;">
 	      <thead>
 	        <tr>
 	          <th data-key="case" data-i18n="case">用例</th>
@@ -211,13 +211,36 @@
 	          <th data-key="clat_p99_ms" data-i18n="metric_clat_p99">延迟 p99 (ms)</th>
 	        </tr>
 	      </thead>
-	      <tbody></tbody>
-	    </table>
-	  </div>
+		      <tbody></tbody>
+		    </table>
+		  </div>
 
-  <div class="charts">
-    <canvas id="bwAll"></canvas>
-  </div>
+		  <div id="systemDetails" class="card" style="display:none; margin: 16px 0; padding: 12px;">
+		    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 8px;">
+		      <div id="systemDetailsTitle" style="font-weight: 600;"></div>
+		      <button id="systemDetailsClose" type="button" data-i18n="close">关闭</button>
+		    </div>
+		    <div id="systemDetailsMeta" style="color:#52606d; font-size: 13px; margin-bottom: 10px;"></div>
+		    <table id="systemDetailsTable" style="margin: 0;">
+		      <thead>
+		        <tr>
+		          <th data-key="case" data-i18n="case">用例</th>
+		          <th data-key="op" data-i18n="op">读写</th>
+		          <th data-key="iops" data-i18n="metric_iops">IOPS</th>
+		          <th data-key="bw_mib_s" data-i18n="metric_bw">吞吐 MiB/s</th>
+		          <th data-key="clat_p95_ms" data-i18n="metric_clat_p95">延迟 p95 (ms)</th>
+		          <th data-key="clat_p99_ms" data-i18n="metric_clat_p99">延迟 p99 (ms)</th>
+		          <th data-key="timestamp" data-i18n="col_timestamp">时间</th>
+		          <th data-key="run_id" data-i18n="run_id">运行ID</th>
+		        </tr>
+		      </thead>
+		      <tbody></tbody>
+		    </table>
+		  </div>
+
+	  <div class="charts">
+	    <canvas id="bwAll"></canvas>
+	  </div>
 
 <script>
 let data = [];
@@ -323,6 +346,7 @@ const I18N = {
     metric_prefix: '指标',
     unknown: '(未知)',
     run_id: '运行ID',
+    system_details: '系统详情',
     engine: '引擎',
     profile: 'profile',
     target_dir: 'target_dir',
@@ -427,6 +451,7 @@ const I18N = {
     metric_prefix: 'metric',
     unknown: '(unknown)',
     run_id: 'run_id',
+    system_details: 'System details',
     engine: 'engine',
     profile: 'profile',
     target_dir: 'target_dir',
@@ -453,6 +478,110 @@ function opLabel(op) {
   if (op === 'write') return t('op_write');
   if (op === 'auto') return t('op_auto');
   return String(op);
+}
+
+function openSystemDetails(system) {
+  if (viewMode !== 'runs' || !runsDoc || !runsView) return;
+  const sys = String(system || '');
+  if (!sys) return;
+
+  // 中文说明：latest 定义为“该 system 对每个 case_key/op 选择最新 timestamp 的 measurement”
+  const latest = new Map(); // `${case_key}|${op}` -> measurement
+  (runsDoc.measurements || []).forEach(m => {
+    if (!m || m.system !== sys) return;
+    const key = `${m.case_key}|${m.op}`;
+    const prev = latest.get(key);
+    if (!prev || String(m.timestamp) > String(prev.timestamp)) latest.set(key, m);
+  });
+
+  const rows = [];
+  latest.forEach(m => {
+    const sig = runsView.caseDefs[m.case_key] || {};
+    rows.push({
+      case_key: m.case_key,
+      case_label: caseLabel(sig),
+      op: m.op,
+      iops: m.iops,
+      bw_mib_s: m.bw_mib_s,
+      clat_p95_ms: m.clat_p95_ms,
+      clat_p99_ms: m.clat_p99_ms,
+      timestamp: m.timestamp,
+      run_id: m.run_id,
+    });
+  });
+  rows.sort((a, b) => {
+    const c = String(a.case_label).localeCompare(String(b.case_label), 'zh-Hans');
+    if (c !== 0) return c;
+    return String(a.op).localeCompare(String(b.op));
+  });
+
+  systemDetailsTitle.textContent = `${t('system_details')}: ${sys}`;
+  systemDetailsMeta.textContent = `${t('compare_cases_label')}=${rows.length}`;
+  systemDetailsTbody.innerHTML = '';
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    const runIdEnc = encodeURIComponent(String(r.run_id || ''));
+    tr.innerHTML = `
+      <td style="text-align:left;">${escHtml(r.case_label)}</td>
+      <td>${escHtml(opLabel(r.op))}</td>
+      <td>${fmt(r.iops,0)}</td>
+      <td>${fmt(r.bw_mib_s,2)}</td>
+      <td>${fmtLatencyMs(r.clat_p95_ms)}</td>
+      <td>${fmtLatencyMs(r.clat_p99_ms)}</td>
+      <td>${escHtml(r.timestamp || '')}</td>
+      <td style="text-align:left;">
+        <a href="#" data-runid="${escHtml(r.run_id || '')}">${escHtml(r.run_id || '')}</a>
+        <a href="results/runs/${runIdEnc}.json" target="_blank" rel="noopener" style="margin-left:8px; color: var(--muted);">json</a>
+      </td>`;
+    systemDetailsTbody.appendChild(tr);
+  });
+
+  systemDetailsSystem = sys;
+  runDetails.style.display = 'none';
+  systemDetails.style.display = 'block';
+  syncStateToHash();
+}
+
+async function openRunDetails(runIdRaw) {
+  if (viewMode !== 'runs') return;
+  const runId = encodeURIComponent(String(runIdRaw || ''));
+  try {
+    const res = await fetch(`results/runs/${runId}.json`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`failed to load run: ${res.status}`);
+    const doc = await res.json();
+    const run = doc.run || {};
+    runDetailsTitle.textContent = `${run.system || t('unknown')} | ${run.timestamp || ''} | ${runIdRaw || runId}`;
+    runDetailsMeta.textContent = `${t('engine')}=${run.engine || '-'} | ${t('profile')}=${run.invoked_profile || '-'} | ${t('target_dir')}=${run.target_dir || '-'}`;
+
+    const rows = [];
+    (doc.cases || []).forEach(c => {
+      const label = caseLabel(c.case || {});
+      const ops = c.ops || {};
+      ['read','write'].forEach(op => {
+        if (!ops[op]) return;
+        rows.push({ case: label, op, ...ops[op] });
+      });
+    });
+
+    runDetailsTbody.innerHTML = '';
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="text-align:left;">${escHtml(r.case)}</td>
+        <td>${escHtml(opLabel(r.op))}</td>
+        <td>${fmt(r.iops,0)}</td>
+        <td>${fmt(r.bw_mib_s,2)}</td>
+        <td>${fmtLatencyMs(r.clat_p95_ms)}</td>
+        <td>${fmtLatencyMs(r.clat_p99_ms)}</td>`;
+      runDetailsTbody.appendChild(tr);
+    });
+
+    systemDetails.style.display = 'none';
+    runDetails.style.display = 'block';
+    syncStateToHash();
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 function rwLabel(rw) {
@@ -597,7 +726,11 @@ function applyStateFromHash() {
     }
 
     // apply layout visibility once
-    if (typeof applyLayoutMode === 'function') applyLayoutMode();
+    if (runsView && typeof runsView.applyLayoutMode === 'function') runsView.applyLayoutMode();
+
+    if (p.detail_system) {
+      openSystemDetails(p.detail_system);
+    }
   } finally {
     suppressHashSync = false;
   }
@@ -641,6 +774,10 @@ function syncStateToHash() {
     if (!sel || !sel.value) return;
     params[key] = sel.value;
   });
+
+  if (systemDetails && systemDetails.style.display !== 'none' && systemDetailsSystem) {
+    params.detail_system = systemDetailsSystem;
+  }
 
   setHashParams(params);
 }
@@ -732,6 +869,23 @@ const runDetailsMeta = document.getElementById('runDetailsMeta');
 const runDetailsTbody = document.querySelector('#runDetailsTable tbody');
 document.getElementById('runDetailsClose').addEventListener('click', () => {
   runDetails.style.display = 'none';
+  syncStateToHash();
+});
+
+const systemDetails = document.getElementById('systemDetails');
+const systemDetailsTitle = document.getElementById('systemDetailsTitle');
+const systemDetailsMeta = document.getElementById('systemDetailsMeta');
+const systemDetailsTbody = document.querySelector('#systemDetailsTable tbody');
+document.getElementById('systemDetailsClose').addEventListener('click', () => {
+  systemDetails.style.display = 'none';
+  systemDetailsSystem = '';
+  syncStateToHash();
+});
+systemDetailsTbody.addEventListener('click', async (e) => {
+  const aRun = e.target.closest('a[data-runid]');
+  if (!aRun) return;
+  e.preventDefault();
+  await openRunDetails(aRun.dataset.runid);
 });
 
 let viewMode = 'legacy'; // legacy|runs
@@ -742,6 +896,7 @@ let currentHeaderMode = ''; // legacy|runs|compare
 let layoutMode = 'scoreboard'; // scoreboard|matrix|explorer
 let runsDoc = null;
 let runsView = null;
+let systemDetailsSystem = '';
 
 const langSelect = document.getElementById('langSelect');
 if (langSelect) {
@@ -900,7 +1055,7 @@ function renderTable(sorted) {
     } else {
       const runId = encodeURIComponent(String(d.run_id || ''));
       tr.innerHTML = `
-        <td><a href="#" data-runid="${escHtml(d.run_id || '')}">${escHtml(d.system || '')}</a></td>
+        <td><a href="#" data-system="${escHtml(d.system || '')}">${escHtml(d.system || '')}</a></td>
         <td><a href="results/runs/${runId}.json" target="_blank" rel="noopener">${escHtml(d.timestamp || '')}</a></td>
         <td>${escHtml(d.op || '')}</td>
         ${tdMetric('iops', d.iops, undefined, 0)}
@@ -1508,7 +1663,7 @@ function buildRunsView(doc) {
     renderAll();
   });
 
-  return { caseDefs, measurements, caseOps, rebuildScoreboardPresets };
+  return { caseDefs, measurements, caseOps, rebuildScoreboardPresets, applyLayoutMode };
 }
 
 function buildRunsRows() {
@@ -1754,48 +1909,17 @@ function renderAll() {
 }
 
 tbody.addEventListener('click', async (e) => {
-  const a = e.target.closest('a[data-runid]');
-  if (!a) return;
-  e.preventDefault();
-  if (viewMode !== 'runs') return;
-
-  const runIdRaw = a.dataset.runid;
-  const runId = encodeURIComponent(String(runIdRaw || ''));
-  try {
-    const res = await fetch(`results/runs/${runId}.json`, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`failed to load run: ${res.status}`);
-    const doc = await res.json();
-    const run = doc.run || {};
-    runDetailsTitle.textContent = `${run.system || t('unknown')} | ${run.timestamp || ''} | ${runIdRaw || runId}`;
-    runDetailsMeta.textContent = `${t('engine')}=${run.engine || '-'} | ${t('profile')}=${run.invoked_profile || '-'} | ${t('target_dir')}=${run.target_dir || '-'}`;
-
-    const rows = [];
-    (doc.cases || []).forEach(c => {
-      const label = caseLabel(c.case || {});
-      const ops = c.ops || {};
-      ['read','write'].forEach(op => {
-        if (!ops[op]) return;
-        rows.push({ case: label, op, ...ops[op] });
-      });
-    });
-
-	    runDetailsTbody.innerHTML = '';
-	    rows.forEach(r => {
-	      const tr = document.createElement('tr');
-	      tr.innerHTML = `
-	        <td style="text-align:left;">${escHtml(r.case)}</td>
-	        <td>${escHtml(opLabel(r.op))}</td>
-	        <td>${fmt(r.iops,0)}</td>
-	        <td>${fmt(r.bw_mib_s,2)}</td>
-	        <td>${fmtLatencyMs(r.clat_p95_ms)}</td>
-	        <td>${fmtLatencyMs(r.clat_p99_ms)}</td>`;
-	      runDetailsTbody.appendChild(tr);
-	    });
-
-    runDetails.style.display = 'block';
-  } catch (err) {
-    console.error(err);
+  const aSys = e.target.closest('a[data-system]');
+  if (aSys) {
+    e.preventDefault();
+    openSystemDetails(aSys.dataset.system);
+    return;
   }
+
+  const aRun = e.target.closest('a[data-runid]');
+  if (!aRun) return;
+  e.preventDefault();
+  await openRunDetails(aRun.dataset.runid);
 });
 
 (async () => {
