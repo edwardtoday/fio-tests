@@ -39,148 +39,162 @@
     td { font-variant-numeric: tabular-nums; }
   </style>
 </head>
-<body>
-  <h1>fio 测试汇总</h1>
-  <div class="subtitle">随机读写展示 IOPS 与 MiB/s，顺序读写展示吞吐 (MiB/s)。数据来自仓库中的 fio 测试日志。</div>
+	<body>
+	  <h1>fio 测试汇总</h1>
+	  <div class="subtitle" id="subtitle">随机读写展示 IOPS 与 MiB/s，顺序读写展示吞吐 (MiB/s)。数据来自仓库中的 fio 测试日志。</div>
 
-  <div id="runsControls" class="card" style="display:none; margin: 16px 0; padding: 12px;">
-    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
-      <label>layout
-        <select id="layoutSelect">
-          <option value="scoreboard" selected>scoreboard</option>
-          <option value="matrix">matrix</option>
-          <option value="explorer">explorer</option>
-        </select>
-      </label>
+	  <div id="langBar" class="card" style="margin: 12px 0 16px; padding: 10px 12px; display:flex; gap:12px; align-items:center; justify-content:space-between;">
+	    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+	      <span style="color: var(--muted); font-size: 13px;" data-i18n="lang_help">语言</span>
+	      <label style="display:flex; gap:8px; align-items:center;">
+	        <span data-i18n="lang_label">语言</span>
+	        <select id="langSelect">
+	          <option value="zh" selected>中文</option>
+	          <option value="en">English</option>
+	        </select>
+	      </label>
+	    </div>
+	    <div style="color: var(--muted); font-size: 12px;" data-i18n="lang_tip">切换语言仅影响页面展示，不影响数据。</div>
+	  </div>
 
-      <label style="display:flex; gap:6px; align-items:center;">
-        <input type="checkbox" id="latestOnly" checked />
-        only show latest result for the same target
-      </label>
+	  <div id="runsControls" class="card" style="display:none; margin: 16px 0; padding: 12px;">
+	    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+	      <label><span data-i18n="layout">布局</span>
+	        <select id="layoutSelect">
+	          <option value="scoreboard" selected data-i18n="layout_scoreboard">看板</option>
+	          <option value="matrix" data-i18n="layout_matrix">矩阵</option>
+	          <option value="explorer" data-i18n="layout_explorer">探索</option>
+	        </select>
+	      </label>
 
-      <label>op
-        <select id="opSelect">
-          <option value="read" selected>read</option>
-          <option value="write">write</option>
-          <option value="auto">auto</option>
-        </select>
-      </label>
+	      <label style="display:flex; gap:6px; align-items:center;">
+	        <input type="checkbox" id="latestOnly" checked />
+	        <span data-i18n="latest_only">仅显示同一系统最新结果</span>
+	      </label>
 
-      <label>view
-        <select id="viewSelect">
-          <option value="by_system" selected>by system</option>
-          <option value="history">history (time)</option>
-          <option value="compare">compare</option>
-        </select>
-      </label>
+	      <label><span data-i18n="op">读写</span>
+	        <select id="opSelect">
+	          <option value="read" selected data-i18n="op_read">读</option>
+	          <option value="write" data-i18n="op_write">写</option>
+	          <option value="auto" data-i18n="op_auto">自动</option>
+	        </select>
+	      </label>
 
-      <label>metric
-        <select id="metricSelect">
-          <option value="bw_mib_s" selected>bw_mib_s</option>
-          <option value="iops">iops</option>
-          <option value="clat_p95_ms">clat_p95_ms</option>
-          <option value="clat_p99_ms">clat_p99_ms</option>
-        </select>
-      </label>
+	      <label><span data-i18n="view">视图</span>
+	        <select id="viewSelect">
+	          <option value="by_system" selected data-i18n="view_by_system">按系统</option>
+	          <option value="history" data-i18n="view_history">历史（时间）</option>
+	          <option value="compare" data-i18n="view_compare">对比</option>
+	        </select>
+	      </label>
 
-      <div id="explorerFilters" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
-        <label>system <select id="systemSelect"></select></label>
-        <label>rw <select id="rwSelect"></select></label>
-        <label>bs <select id="bsSelect"></select></label>
-        <label>qd <select id="qdSelect"></select></label>
-        <label>runtime_s <select id="runtimeSelect"></select></label>
-        <label>direct <select id="directSelect"></select></label>
-        <label>fdatasync <select id="fdatasyncSelect"></select></label>
-        <label>ioengine <select id="ioengineSelect"></select></label>
-        <label>rwmixread <select id="mixSelect"></select></label>
-        <label>size_policy <select id="sizePolicySelect"></select></label>
-        <label>case
-          <select id="caseSelect" style="min-width: 340px;"></select>
-        </label>
-      </div>
+	      <label><span data-i18n="metric">指标</span>
+	        <select id="metricSelect">
+	          <option value="bw_mib_s" selected data-i18n="metric_bw">吞吐 MiB/s</option>
+	          <option value="iops" data-i18n="metric_iops">IOPS</option>
+	          <option value="clat_p95_ms" data-i18n="metric_clat_p95">延迟 p95 (ms)</option>
+	          <option value="clat_p99_ms" data-i18n="metric_clat_p99">延迟 p99 (ms)</option>
+	        </select>
+	      </label>
+
+	      <div id="explorerFilters" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+	        <label><span data-i18n="filter_system">系统</span> <select id="systemSelect"></select></label>
+	        <label><span data-i18n="filter_rw">读写模式</span> <select id="rwSelect"></select></label>
+	        <label><span data-i18n="filter_bs">块大小</span> <select id="bsSelect"></select></label>
+	        <label><span data-i18n="filter_qd">队列深度</span> <select id="qdSelect"></select></label>
+	        <label><span data-i18n="filter_runtime">时长(s)</span> <select id="runtimeSelect"></select></label>
+	        <label><span data-i18n="filter_direct">direct</span> <select id="directSelect"></select></label>
+	        <label><span data-i18n="filter_fdatasync">fdatasync</span> <select id="fdatasyncSelect"></select></label>
+	        <label><span data-i18n="filter_ioengine">ioengine</span> <select id="ioengineSelect"></select></label>
+	        <label><span data-i18n="filter_mix">rwmixread</span> <select id="mixSelect"></select></label>
+	        <label><span data-i18n="filter_size_policy">size_policy</span> <select id="sizePolicySelect"></select></label>
+	        <label><span data-i18n="filter_case">用例</span>
+	          <select id="caseSelect" style="min-width: 340px;"></select>
+	        </label>
+	      </div>
     </div>
 
-    <div id="scoreboardPanel" style="display:none; margin-top: 12px; border-top: 1px dashed #e4e7eb; padding-top: 12px;">
-      <div style="font-size: 13px; color:#52606d; margin-bottom: 8px;">
-        Scoreboard：选择一个常用 case，一键查看各 system 的横向对比（默认 latest）。
-      </div>
-      <div id="scoreboardPresets" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
-    </div>
+	    <div id="scoreboardPanel" style="display:none; margin-top: 12px; border-top: 1px dashed #e4e7eb; padding-top: 12px;">
+	      <div style="font-size: 13px; color:#52606d; margin-bottom: 8px;" data-i18n="scoreboard_help">
+	        看板：选择一个常用用例，一键查看各系统横向对比（默认仅显示最新）。
+	      </div>
+	      <div id="scoreboardPresets" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
+	    </div>
 
-    <div id="heatmapLegend" style="margin-top: 12px; border-top: 1px dashed #e4e7eb; padding-top: 12px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
-      <span class="chip"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:hsl(0 70% 92%);border:1px solid var(--border)"></span> low</span>
-      <span class="chip"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:hsl(140 70% 90%);border:1px solid var(--border)"></span> high</span>
-      <span class="chip">iops/bw：高更好（绿）</span>
-      <span class="chip">latency：低更好（绿，反向）</span>
-    </div>
-    <div id="compareControls" style="display:none; margin-top: 12px; border-top: 1px dashed #e4e7eb; padding-top: 12px;">
-      <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start;">
-        <label>group by
-          <select id="compareGroupBy">
-            <option value="metric" selected>metric</option>
-            <option value="run">run (system)</option>
-          </select>
-        </label>
+	    <div id="heatmapLegend" style="margin-top: 12px; border-top: 1px dashed #e4e7eb; padding-top: 12px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+	      <span class="chip"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:hsl(0 70% 92%);border:1px solid var(--border)"></span> <span data-i18n="heat_low">低</span></span>
+	      <span class="chip"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:hsl(140 70% 90%);border:1px solid var(--border)"></span> <span data-i18n="heat_high">高</span></span>
+	      <span class="chip" data-i18n="heat_rule_bw_iops">IOPS/吞吐：高更好（绿）</span>
+	      <span class="chip" data-i18n="heat_rule_lat">延迟：低更好（绿，反向）</span>
+	    </div>
+	    <div id="compareControls" style="display:none; margin-top: 12px; border-top: 1px dashed #e4e7eb; padding-top: 12px;">
+	      <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start;">
+	        <label><span data-i18n="compare_group_by">分组</span>
+	          <select id="compareGroupBy">
+	            <option value="metric" selected data-i18n="compare_group_by_metric">按指标</option>
+	            <option value="run" data-i18n="compare_group_by_run">按系统</option>
+	          </select>
+	        </label>
 
-        <label>systems (multi)
-          <select id="compareSystems" multiple size="6" style="min-width: 260px;"></select>
-        </label>
+	        <label><span data-i18n="compare_systems_multi">系统（多选）</span>
+	          <select id="compareSystems" multiple size="6" style="min-width: 260px;"></select>
+	        </label>
 
-        <label>cases (multi)
-          <select id="compareCases" multiple size="6" style="min-width: 520px;"></select>
-        </label>
+	        <label><span data-i18n="compare_cases_multi">用例（多选）</span>
+	          <select id="compareCases" multiple size="6" style="min-width: 520px;"></select>
+	        </label>
 
-        <label>metrics (multi)
-          <select id="compareMetrics" multiple size="6" style="min-width: 200px;">
-            <option value="iops">iops</option>
-            <option value="bw_mib_s" selected>bw_mib_s</option>
-            <option value="clat_p95_ms">clat_p95_ms</option>
-            <option value="clat_p99_ms">clat_p99_ms</option>
-          </select>
-        </label>
-      </div>
-      <div style="margin-top: 10px; color:#52606d; font-size: 13px;">
-        compare 默认按 “每个 system × 每个 case/op” 各自选择最新包含该 case 的 run（避免最新一次没跑该 case 导致空值）。
-      </div>
-    </div>
+	        <label><span data-i18n="compare_metrics_multi">指标（多选）</span>
+	          <select id="compareMetrics" multiple size="6" style="min-width: 200px;">
+	            <option value="iops" data-i18n="metric_iops">IOPS</option>
+	            <option value="bw_mib_s" selected data-i18n="metric_bw">吞吐 MiB/s</option>
+	            <option value="clat_p95_ms" data-i18n="metric_clat_p95">延迟 p95 (ms)</option>
+	            <option value="clat_p99_ms" data-i18n="metric_clat_p99">延迟 p99 (ms)</option>
+	          </select>
+	        </label>
+	      </div>
+	      <div style="margin-top: 10px; color:#52606d; font-size: 13px;" data-i18n="compare_help">
+	        对比模式会按“每个系统 × 每个用例/读写”各自选择最新包含该用例的运行记录（避免最新一次没跑该用例导致空值）。
+	      </div>
+	    </div>
     <div id="runsHint" style="margin-top: 10px; color:#52606d; font-size: 13px;"></div>
   </div>
 
-  <table id="results">
-    <thead>
-      <tr>
-        <th data-key="device">设备</th>
-        <th data-key="rand_read_iops">随机读 IOPS</th>
-        <th data-key="rand_read_bw_mib">随机读 MiB/s</th>
-        <th data-key="rand_write_iops">随机写 IOPS</th>
-        <th data-key="rand_write_bw_mib">随机写 MiB/s</th>
-        <th data-key="seq_read_mib_s">顺序读 MiB/s</th>
-        <th data-key="seq_write_mib_s">顺序写 MiB/s</th>
-      </tr>
-    </thead>
+	  <table id="results">
+	    <thead>
+	      <tr>
+	        <th data-key="device" data-i18n="col_device">设备</th>
+	        <th data-key="rand_read_iops" data-i18n="col_rand_read_iops">随机读 IOPS</th>
+	        <th data-key="rand_read_bw_mib" data-i18n="col_rand_read_bw">随机读 MiB/s</th>
+	        <th data-key="rand_write_iops" data-i18n="col_rand_write_iops">随机写 IOPS</th>
+	        <th data-key="rand_write_bw_mib" data-i18n="col_rand_write_bw">随机写 MiB/s</th>
+	        <th data-key="seq_read_mib_s" data-i18n="col_seq_read_bw">顺序读 MiB/s</th>
+	        <th data-key="seq_write_mib_s" data-i18n="col_seq_write_bw">顺序写 MiB/s</th>
+	      </tr>
+	    </thead>
     <tbody></tbody>
   </table>
 
-  <div id="runDetails" class="card" style="display:none; margin: 16px 0; padding: 12px;">
-    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 8px;">
-      <div id="runDetailsTitle" style="font-weight: 600;"></div>
-      <button id="runDetailsClose" type="button">close</button>
-    </div>
-    <div id="runDetailsMeta" style="color:#52606d; font-size: 13px; margin-bottom: 10px;"></div>
-    <table id="runDetailsTable" style="margin: 0;">
-      <thead>
-        <tr>
-          <th data-key="case">case</th>
-          <th data-key="op">op</th>
-          <th data-key="iops">iops</th>
-          <th data-key="bw_mib_s">bw_mib_s</th>
-          <th data-key="clat_p95_ms">clat_p95_ms</th>
-          <th data-key="clat_p99_ms">clat_p99_ms</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+	  <div id="runDetails" class="card" style="display:none; margin: 16px 0; padding: 12px;">
+	    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 8px;">
+	      <div id="runDetailsTitle" style="font-weight: 600;"></div>
+	      <button id="runDetailsClose" type="button" data-i18n="close">关闭</button>
+	    </div>
+	    <div id="runDetailsMeta" style="color:#52606d; font-size: 13px; margin-bottom: 10px;"></div>
+	    <table id="runDetailsTable" style="margin: 0;">
+	      <thead>
+	        <tr>
+	          <th data-key="case" data-i18n="case">用例</th>
+	          <th data-key="op" data-i18n="op">读写</th>
+	          <th data-key="iops" data-i18n="metric_iops">IOPS</th>
+	          <th data-key="bw_mib_s" data-i18n="metric_bw">吞吐 MiB/s</th>
+	          <th data-key="clat_p95_ms" data-i18n="metric_clat_p95">延迟 p95 (ms)</th>
+	          <th data-key="clat_p99_ms" data-i18n="metric_clat_p99">延迟 p99 (ms)</th>
+	        </tr>
+	      </thead>
+	      <tbody></tbody>
+	    </table>
+	  </div>
 
   <div class="charts">
     <canvas id="bwAll"></canvas>
@@ -188,6 +202,258 @@
 
 <script>
 let data = [];
+
+const I18N = {
+  zh: {
+    title: 'fio 测试汇总',
+    subtitle: '随机读写展示 IOPS 与 MiB/s，顺序读写展示吞吐 (MiB/s)。数据来自仓库中的 fio 测试日志。',
+
+    lang_help: '语言',
+    lang_label: '语言',
+    lang_tip: '切换语言仅影响页面展示，不影响数据。',
+
+    layout: '布局',
+    layout_scoreboard: '看板',
+    layout_matrix: '矩阵',
+    layout_explorer: '探索',
+
+    latest_only: '仅显示同一系统最新结果',
+
+    op: '读写',
+    op_read: '读',
+    op_write: '写',
+    op_auto: '自动',
+
+    view: '视图',
+    view_by_system: '按系统',
+    view_history: '历史（时间）',
+    view_compare: '对比',
+
+    metric: '指标',
+    metric_bw: '吞吐 MiB/s',
+    metric_iops: 'IOPS',
+    metric_clat_p95: '延迟 p95 (ms)',
+    metric_clat_p99: '延迟 p99 (ms)',
+
+    filter_system: '系统',
+    filter_rw: '读写模式',
+    filter_bs: '块大小',
+    filter_qd: '队列深度',
+    filter_runtime: '时长(s)',
+    filter_direct: 'direct（直写）',
+    filter_fdatasync: 'fdatasync（落盘）',
+    filter_ioengine: 'ioengine（引擎）',
+    filter_mix: 'rwmixread（读比例）',
+    filter_size_policy: 'size_policy（文件大小）',
+    filter_case: '用例',
+
+    scoreboard_help: '看板：选择一个常用用例，一键查看各系统横向对比（默认仅显示最新）。',
+    preset_randread_4k_qd1: '4K 随机读 QD1',
+    preset_randwrite_4k_qd1: '4K 随机写 QD1',
+    preset_randread_4k_qd4: '4K 随机读 QD4',
+    preset_randwrite_4k_qd4: '4K 随机写 QD4',
+    preset_seq_read_1m: '1M 顺序读',
+    preset_seq_write_1m: '1M 顺序写',
+    preset_fdatasync_write_4k: 'fdatasync 写 4K（QD1）',
+
+    heat_low: '低',
+    heat_high: '高',
+    heat_rule_bw_iops: 'IOPS/吞吐：高更好（绿）',
+    heat_rule_lat: '延迟：低更好（绿，反向）',
+
+    compare_group_by: '分组',
+    compare_group_by_metric: '按指标',
+    compare_group_by_run: '按系统',
+    compare_systems_multi: '系统（多选）',
+    compare_cases_multi: '用例（多选）',
+    compare_metrics_multi: '指标（多选）',
+    compare_help: '对比模式会按“每个系统 × 每个用例/读写”各自选择最新包含该用例的运行记录（避免最新一次没跑该用例导致空值）。',
+
+    close: '关闭',
+    case: '用例',
+
+    any: '(任意)',
+    all: '(全部)',
+
+    col_device: '设备',
+    col_rand_read_iops: '随机读 IOPS',
+    col_rand_read_bw: '随机读 MiB/s',
+    col_rand_write_iops: '随机写 IOPS',
+    col_rand_write_bw: '随机写 MiB/s',
+    col_seq_read_bw: '顺序读 MiB/s',
+    col_seq_write_bw: '顺序写 MiB/s',
+
+    col_system: '系统',
+    col_timestamp: '时间',
+    col_op: '读写',
+
+    hint_case_key: '用例ID',
+    hint_matched_systems: '匹配系统',
+    hint_runs: '运行次数',
+
+    compare_hint: '对比',
+    compare_group_by_label: '分组',
+    compare_systems_label: '系统数',
+    compare_cases_label: '用例(op)数',
+    compare_metrics_label: '指标数',
+
+    metric_prefix: '指标',
+    unknown: '(未知)',
+    run_id: '运行ID',
+    engine: '引擎',
+    profile: 'profile',
+    target_dir: 'target_dir',
+  },
+  en: {
+    title: 'fio Results',
+    subtitle: 'Random shows IOPS/MiB/s; sequential shows throughput (MiB/s). Data comes from fio logs in this repo.',
+
+    lang_help: 'Language',
+    lang_label: 'Language',
+    lang_tip: 'Language affects UI only, not the data.',
+
+    layout: 'Layout',
+    layout_scoreboard: 'Scoreboard',
+    layout_matrix: 'Matrix',
+    layout_explorer: 'Explorer',
+
+    latest_only: 'Only show latest result for the same target',
+
+    op: 'Op',
+    op_read: 'Read',
+    op_write: 'Write',
+    op_auto: 'Auto',
+
+    view: 'View',
+    view_by_system: 'By system',
+    view_history: 'History (time)',
+    view_compare: 'Compare',
+
+    metric: 'Metric',
+    metric_bw: 'Throughput (MiB/s)',
+    metric_iops: 'IOPS',
+    metric_clat_p95: 'Latency p95 (ms)',
+    metric_clat_p99: 'Latency p99 (ms)',
+
+    filter_system: 'System',
+    filter_rw: 'RW',
+    filter_bs: 'Block size',
+    filter_qd: 'QD',
+    filter_runtime: 'Runtime (s)',
+    filter_direct: 'direct',
+    filter_fdatasync: 'fdatasync',
+    filter_ioengine: 'ioengine',
+    filter_mix: 'rwmixread',
+    filter_size_policy: 'size_policy',
+    filter_case: 'Case',
+
+    scoreboard_help: 'Scoreboard: pick a common case and compare systems (latest-only by default).',
+    preset_randread_4k_qd1: '4K randread QD1',
+    preset_randwrite_4k_qd1: '4K randwrite QD1',
+    preset_randread_4k_qd4: '4K randread QD4',
+    preset_randwrite_4k_qd4: '4K randwrite QD4',
+    preset_seq_read_1m: '1M seq read',
+    preset_seq_write_1m: '1M seq write',
+    preset_fdatasync_write_4k: 'fdatasync write 4K (QD1)',
+
+    heat_low: 'Low',
+    heat_high: 'High',
+    heat_rule_bw_iops: 'IOPS/BW: higher is better (green)',
+    heat_rule_lat: 'Latency: lower is better (green, inverted)',
+
+    compare_group_by: 'Group by',
+    compare_group_by_metric: 'Metric',
+    compare_group_by_run: 'System',
+    compare_systems_multi: 'Systems (multi)',
+    compare_cases_multi: 'Cases (multi)',
+    compare_metrics_multi: 'Metrics (multi)',
+    compare_help: 'Compare picks (system × case/op) the latest run that contains that case (avoid missing values when the latest run did not include it).',
+
+    close: 'Close',
+    case: 'Case',
+
+    any: '(Any)',
+    all: '(All)',
+
+    col_device: 'Device',
+    col_rand_read_iops: 'Rand read IOPS',
+    col_rand_read_bw: 'Rand read MiB/s',
+    col_rand_write_iops: 'Rand write IOPS',
+    col_rand_write_bw: 'Rand write MiB/s',
+    col_seq_read_bw: 'Seq read MiB/s',
+    col_seq_write_bw: 'Seq write MiB/s',
+
+    col_system: 'System',
+    col_timestamp: 'Timestamp',
+    col_op: 'Op',
+
+    hint_case_key: 'case_key',
+    hint_matched_systems: 'matched systems',
+    hint_runs: 'runs',
+
+    compare_hint: 'compare',
+    compare_group_by_label: 'group_by',
+    compare_systems_label: 'systems',
+    compare_cases_label: 'cases(op)',
+    compare_metrics_label: 'metrics',
+
+    metric_prefix: 'metric',
+    unknown: '(unknown)',
+    run_id: 'run_id',
+    engine: 'engine',
+    profile: 'profile',
+    target_dir: 'target_dir',
+  }
+};
+
+let lang = (localStorage.getItem('fio_ui_lang') || 'zh');
+if (!I18N[lang]) lang = 'zh';
+
+function t(key) {
+  return (I18N[lang] && I18N[lang][key]) || I18N.zh[key] || key;
+}
+
+function metricLabel(key) {
+  if (key === 'bw_mib_s') return t('metric_bw');
+  if (key === 'iops') return t('metric_iops');
+  if (key === 'clat_p95_ms') return t('metric_clat_p95');
+  if (key === 'clat_p99_ms') return t('metric_clat_p99');
+  return String(key);
+}
+
+function opLabel(op) {
+  if (op === 'read') return t('op_read');
+  if (op === 'write') return t('op_write');
+  if (op === 'auto') return t('op_auto');
+  return String(op);
+}
+
+function rwLabel(rw) {
+  if (lang === 'en') return String(rw);
+  const m = {
+    randread: '随机读',
+    randwrite: '随机写',
+    randrw: '随机混合',
+    read: '顺序读',
+    write: '顺序写',
+  };
+  return m[rw] || String(rw);
+}
+
+function applyI18n() {
+  document.documentElement.lang = (lang === 'en') ? 'en' : 'zh-CN';
+  document.title = t('title');
+  const h1 = document.querySelector('h1');
+  if (h1) h1.textContent = t('title');
+  const subtitle = document.getElementById('subtitle');
+  if (subtitle) subtitle.textContent = t('subtitle');
+
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    if (!k) return;
+    el.textContent = t(k);
+  });
+}
 
 async function loadData() {
   const res = await fetch('results/data.json', { cache: 'no-store' });
@@ -284,6 +550,24 @@ let sortDir = 'asc';
 let headerCells = [];
 let currentHeaderMode = ''; // legacy|runs|compare
 let layoutMode = 'scoreboard'; // scoreboard|matrix|explorer
+let runsDoc = null;
+let runsView = null;
+
+const langSelect = document.getElementById('langSelect');
+if (langSelect) {
+  langSelect.value = lang;
+  langSelect.addEventListener('change', () => {
+    const next = langSelect.value;
+    lang = I18N[next] ? next : 'zh';
+    localStorage.setItem('fio_ui_lang', lang);
+    applyI18n();
+    // 语言切换后强制重建表头与预设按钮，避免出现旧语言残留。
+    currentHeaderMode = '';
+    if (runsView && typeof runsView.rebuildScoreboardPresets === 'function') runsView.rebuildScoreboardPresets();
+    renderAll();
+  });
+}
+applyI18n();
 
 function setHeaders(headers) {
   theadRow.innerHTML = headers.map(h => `<th data-key="${h.key}">${h.label}</th>`).join('');
@@ -300,13 +584,13 @@ function clearHeadersAndSort() {
 function ensureRunsHeaders() {
   if (currentHeaderMode === 'runs' && headerCells.length) return;
   setHeaders([
-    { key: 'system', label: 'system' },
-    { key: 'timestamp', label: 'timestamp' },
-    { key: 'op', label: 'op' },
-    { key: 'iops', label: 'iops' },
-    { key: 'bw_mib_s', label: 'bw_mib_s' },
-    { key: 'clat_p95_ms', label: 'clat_p95_ms' },
-    { key: 'clat_p99_ms', label: 'clat_p99_ms' }
+    { key: 'system', label: t('col_system') },
+    { key: 'timestamp', label: t('col_timestamp') },
+    { key: 'op', label: t('col_op') },
+    { key: 'iops', label: t('metric_iops') },
+    { key: 'bw_mib_s', label: t('metric_bw') },
+    { key: 'clat_p95_ms', label: t('metric_clat_p95') },
+    { key: 'clat_p99_ms', label: t('metric_clat_p99') }
   ]);
   bindSortHandlers();
 }
@@ -314,13 +598,13 @@ function ensureRunsHeaders() {
 function ensureLegacyHeaders() {
   if (currentHeaderMode === 'legacy' && headerCells.length) return;
   setHeaders([
-    { key: 'device', label: '设备' },
-    { key: 'rand_read_iops', label: '随机读 IOPS' },
-    { key: 'rand_read_bw_mib', label: '随机读 MiB/s' },
-    { key: 'rand_write_iops', label: '随机写 IOPS' },
-    { key: 'rand_write_bw_mib', label: '随机写 MiB/s' },
-    { key: 'seq_read_mib_s', label: '顺序读 MiB/s' },
-    { key: 'seq_write_mib_s', label: '顺序写 MiB/s' }
+    { key: 'device', label: t('col_device') },
+    { key: 'rand_read_iops', label: t('col_rand_read_iops') },
+    { key: 'rand_read_bw_mib', label: t('col_rand_read_bw') },
+    { key: 'rand_write_iops', label: t('col_rand_write_iops') },
+    { key: 'rand_write_bw_mib', label: t('col_rand_write_bw') },
+    { key: 'seq_read_mib_s', label: t('col_seq_read_bw') },
+    { key: 'seq_write_mib_s', label: t('col_seq_write_bw') }
   ]);
   bindSortHandlers();
 }
@@ -567,20 +851,20 @@ function renderChart(sorted) {
       const height = 200 + rowCount * perDevice;
       bwCanvas.style.height = `${height}px`;
 
-      if (opMode === 'auto') {
-        const systems = uniqInOrder(sorted.map(d => d.system));
-        ensureChart('bar', datasetCount, [`read ${metric}`, `write ${metric}`]);
-        bwChart.data.labels = systems;
-        const readMap = new Map(sorted.filter(r => r.op === 'read').map(r => [r.system, r[metric]]));
-        const writeMap = new Map(sorted.filter(r => r.op === 'write').map(r => [r.system, r[metric]]));
-        bwChart.data.datasets[0].data = systems.map(s => readMap.get(s) ?? null);
-        bwChart.data.datasets[1].data = systems.map(s => writeMap.get(s) ?? null);
-      } else {
-        const label = `metric: ${metric}`;
-        ensureChart('bar', datasetCount, [label]);
-        bwChart.data.labels = sorted.map(d => d.system);
-        bwChart.data.datasets[0].data = sorted.map(d => d[metric]);
-      }
+	      if (opMode === 'auto') {
+	        const systems = uniqInOrder(sorted.map(d => d.system));
+	        ensureChart('bar', datasetCount, [`${opLabel('read')} ${metricLabel(metric)}`, `${opLabel('write')} ${metricLabel(metric)}`]);
+	        bwChart.data.labels = systems;
+	        const readMap = new Map(sorted.filter(r => r.op === 'read').map(r => [r.system, r[metric]]));
+	        const writeMap = new Map(sorted.filter(r => r.op === 'write').map(r => [r.system, r[metric]]));
+	        bwChart.data.datasets[0].data = systems.map(s => readMap.get(s) ?? null);
+	        bwChart.data.datasets[1].data = systems.map(s => writeMap.get(s) ?? null);
+	      } else {
+	        const label = `${t('metric_prefix')}: ${metricLabel(metric)}`;
+	        ensureChart('bar', datasetCount, [label]);
+	        bwChart.data.labels = sorted.map(d => d.system);
+	        bwChart.data.datasets[0].data = sorted.map(d => d[metric]);
+	      }
       bwChart.options.plugins.datalabels.display = true;
       bwChart.options.scales.x = { beginAtZero: true };
       bwChart.options.scales.y = { ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } };
@@ -606,12 +890,13 @@ function uniqInOrder(values) {
   return out;
 }
 
-function setSelectOptions(select, values, allLabel='(any)') {
+function setSelectOptions(select, values, allLabel) {
+  const anyLabel = allLabel == null ? t('any') : allLabel;
   const current = select.value;
   select.innerHTML = '';
   const optAny = document.createElement('option');
   optAny.value = '';
-  optAny.textContent = allLabel;
+  optAny.textContent = anyLabel;
   select.appendChild(optAny);
   values.forEach(v => {
     const o = document.createElement('option');
@@ -629,11 +914,14 @@ function caseLabel(sig) {
   const bs = sig.bs;
   const qd = sig.qd;
   const runtime = sig.runtime_s == null ? '-' : sig.runtime_s;
-  const mix = sig.rwmixread == null ? '' : ` mix${sig.rwmixread}`;
-  const direct = sig.direct ? 'direct' : 'buffered';
+  const mix = sig.rwmixread == null ? '' : (lang === 'en' ? ` mix${sig.rwmixread}` : ` 混合${sig.rwmixread}`);
+  const direct = sig.direct ? (lang === 'en' ? 'direct' : '直写') : (lang === 'en' ? 'buffered' : '缓存');
   const fd = sig.fdatasync ? '+fdatasync' : '';
-  const sp = sig.size_policy?.mode || 'size';
-  return `${rw} ${bs} qd${qd} rt${runtime}s ${direct} ${sig.ioengine}${fd}${mix} ${sp}`;
+  const spRaw = sig.size_policy?.mode || 'size';
+  const sp = (lang === 'en') ? spRaw : (spRaw === 'size' ? '大小' : spRaw);
+  const rt = (lang === 'en') ? `rt${runtime}s` : `时长${runtime}s`;
+  const qdLabel = (lang === 'en') ? `qd${qd}` : `QD${qd}`;
+  return `${rwLabel(rw)} ${bs} ${qdLabel} ${rt} ${direct} ${sig.ioengine}${fd}${mix} ${sp}`;
 }
 
 function matchesFilter(sig, key, val) {
@@ -717,7 +1005,7 @@ function buildRunsView(doc) {
   setSelectOptions(ioengineSelect, uniqSorted(sigs.map(s => s.ioengine)));
   setSelectOptions(mixSelect, uniqSorted(sigs.map(s => s.rwmixread)));
   setSelectOptions(sizePolicySelect, uniqSorted(sigs.map(s => s.size_policy?.mode)));
-  setSelectOptions(systemSelect, uniqSorted(measurements.map(m => m.system)), '(all)');
+  setSelectOptions(systemSelect, uniqSorted(measurements.map(m => m.system)), t('all'));
 
   function rebuildCompareOptions() {
     // systems: default select all
@@ -916,7 +1204,7 @@ function buildRunsView(doc) {
     return '';
   }
 
-  function addPreset(label, { rw, bs, qd, direct, fdatasync, ioengine, runtime_s }, { op, metric }) {
+  function addPreset(labelKey, { rw, bs, qd, direct, fdatasync, ioengine, runtime_s }, { op, metric }) {
     const ck = findCaseKey(sig =>
       sig.rw === rw &&
       sig.bs === bs &&
@@ -928,11 +1216,8 @@ function buildRunsView(doc) {
     );
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.textContent = label;
-    btn.style.padding = '6px 10px';
-    btn.style.border = '1px solid #d9e2ec';
-    btn.style.borderRadius = '6px';
-    btn.style.background = '#fff';
+    btn.className = 'btn';
+    btn.textContent = t(labelKey);
     btn.style.cursor = ck ? 'pointer' : 'not-allowed';
     btn.style.opacity = ck ? '1' : '0.4';
     btn.addEventListener('click', () => {
@@ -965,14 +1250,14 @@ function buildRunsView(doc) {
     scoreboardPresets.innerHTML = '';
     const aio = 'native_aio';
     const rt120 = 120;
-    addPreset('4k randread qd1',  { rw:'randread',  bs:'4k', qd:1,  direct:1, fdatasync:0, ioengine:aio, runtime_s:rt120 }, { op:'read',  metric:'iops' });
-    addPreset('4k randwrite qd1', { rw:'randwrite', bs:'4k', qd:1,  direct:1, fdatasync:0, ioengine:aio, runtime_s:rt120 }, { op:'write', metric:'iops' });
-    addPreset('4k randread qd4',  { rw:'randread',  bs:'4k', qd:4,  direct:1, fdatasync:0, ioengine:aio, runtime_s:rt120 }, { op:'read',  metric:'iops' });
-    addPreset('4k randwrite qd4', { rw:'randwrite', bs:'4k', qd:4,  direct:1, fdatasync:0, ioengine:aio, runtime_s:rt120 }, { op:'write', metric:'iops' });
-    addPreset('1M seq read',      { rw:'read',      bs:'1M', qd:64, direct:1, fdatasync:0, ioengine:aio, runtime_s:rt120 }, { op:'read',  metric:'bw_mib_s' });
-    addPreset('1M seq write',     { rw:'write',     bs:'1M', qd:64, direct:1, fdatasync:0, ioengine:aio, runtime_s:rt120 }, { op:'write', metric:'bw_mib_s' });
+    addPreset('preset_randread_4k_qd1',  { rw:'randread',  bs:'4k', qd:1,  direct:1, fdatasync:0, ioengine:aio, runtime_s:rt120 }, { op:'read',  metric:'iops' });
+    addPreset('preset_randwrite_4k_qd1', { rw:'randwrite', bs:'4k', qd:1,  direct:1, fdatasync:0, ioengine:aio, runtime_s:rt120 }, { op:'write', metric:'iops' });
+    addPreset('preset_randread_4k_qd4',  { rw:'randread',  bs:'4k', qd:4,  direct:1, fdatasync:0, ioengine:aio, runtime_s:rt120 }, { op:'read',  metric:'iops' });
+    addPreset('preset_randwrite_4k_qd4', { rw:'randwrite', bs:'4k', qd:4,  direct:1, fdatasync:0, ioengine:aio, runtime_s:rt120 }, { op:'write', metric:'iops' });
+    addPreset('preset_seq_read_1m',      { rw:'read',      bs:'1M', qd:64, direct:1, fdatasync:0, ioengine:aio, runtime_s:rt120 }, { op:'read',  metric:'bw_mib_s' });
+    addPreset('preset_seq_write_1m',     { rw:'write',     bs:'1M', qd:64, direct:1, fdatasync:0, ioengine:aio, runtime_s:rt120 }, { op:'write', metric:'bw_mib_s' });
     // DB-like fsync path uses sync engine and buffered IO
-    addPreset('fdatasync write 4k', { rw:'write', bs:'4k', qd:1, direct:0, fdatasync:1, ioengine:'sync', runtime_s:60 }, { op:'write', metric:'clat_p95_ms' });
+    addPreset('preset_fdatasync_write_4k', { rw:'write', bs:'4k', qd:1, direct:0, fdatasync:1, ioengine:'sync', runtime_s:60 }, { op:'write', metric:'clat_p95_ms' });
   }
 
   function applyLayoutMode() {
@@ -1015,11 +1300,8 @@ function buildRunsView(doc) {
     renderAll();
   });
 
-  return { caseDefs, measurements, caseOps };
+  return { caseDefs, measurements, caseOps, rebuildScoreboardPresets };
 }
-
-let runsDoc = null;
-let runsView = null;
 
 function buildRunsRows() {
   if (viewMode === 'runs' && layoutMode === 'matrix') return [];
@@ -1153,7 +1435,7 @@ function renderCompare() {
       tbody.appendChild(trTitle);
 
       const trHead = document.createElement('tr');
-      trHead.innerHTML = `<td style="text-align:left;">case</td>` + model.metrics.map(m => `<td>${esc(m)}</td>`).join('');
+      trHead.innerHTML = `<td style="text-align:left;">${esc(t('case'))}</td>` + model.metrics.map(m => `<td>${esc(metricLabel(m))}</td>`).join('');
       tbody.appendChild(trHead);
 
       model.caseOpsWanted.forEach(co => {
@@ -1163,7 +1445,7 @@ function renderCompare() {
           if (!m) return `<td>-</td>`;
           const v = m[metric];
           const txt = (metric.startsWith('clat_')) ? fmtLatencyMs(v) : (metric === 'iops' ? fmt(v,0) : fmt(v,2));
-          const tip = `run_id=${m.run_id}\\n${m.timestamp}`;
+          const tip = `${t('run_id')}=${m.run_id}\\n${m.timestamp}`;
           return `<td title="${esc(tip)}">${esc(txt)}</td>`;
         }).join('');
         tbody.appendChild(tr);
@@ -1188,11 +1470,11 @@ function renderCompare() {
       const best = (min === null || max === null) ? null : (preferLower ? min : max);
 
       const trTitle = document.createElement('tr');
-      trTitle.innerHTML = `<td colspan="999" style="text-align:left; font-weight:600; background:#f8fafc;">metric: ${esc(metric)}</td>`;
+      trTitle.innerHTML = `<td colspan="999" style="text-align:left; font-weight:600; background:#f8fafc;">${esc(t('metric_prefix'))}: ${esc(metricLabel(metric))}</td>`;
       tbody.appendChild(trTitle);
 
       const trHead = document.createElement('tr');
-      trHead.innerHTML = `<td style="text-align:left;">system</td>` + model.caseOpsWanted.map(co => `<td>${esc(co.label)}</td>`).join('');
+      trHead.innerHTML = `<td style="text-align:left;">${esc(t('col_system'))}</td>` + model.caseOpsWanted.map(co => `<td>${esc(co.label)}</td>`).join('');
       tbody.appendChild(trHead);
 
       model.systems.forEach(system => {
@@ -1202,7 +1484,7 @@ function renderCompare() {
           if (!m) return `<td>-</td>`;
           const v = m[metric];
           const txt = (metric.startsWith('clat_')) ? fmtLatencyMs(v) : (metric === 'iops' ? fmt(v,0) : fmt(v,2));
-          const tip = `run_id=${m.run_id}\\n${m.timestamp}`;
+          const tip = `${t('run_id')}=${m.run_id}\\n${m.timestamp}`;
           if (!isFiniteNum(v) || min === null || max === null) return `<td title="${esc(tip)}">${esc(txt)}</td>`;
           const bg = heatBg(v, min, max, preferLower);
           const bestClass = (best !== null && almostEqual(v, best)) ? ' best' : '';
@@ -1216,7 +1498,8 @@ function renderCompare() {
   const sysCount = model.systems.length;
   const caseCount = model.caseOpsWanted.length;
   const metricCount = model.metrics.length;
-  runsHint.textContent = `compare | group_by=${groupBy} | systems=${sysCount} | cases(op)=${caseCount} | metrics=${metricCount}`;
+  const groupByText = (groupBy === 'metric') ? t('compare_group_by_metric') : t('compare_group_by_run');
+  runsHint.textContent = `${t('compare_hint')} | ${t('compare_group_by_label')}=${groupByText} | ${t('compare_systems_label')}=${sysCount} | ${t('compare_cases_label')}=${caseCount} | ${t('compare_metrics_label')}=${metricCount}`;
 }
 
 function renderAll() {
@@ -1250,9 +1533,11 @@ function renderAll() {
     const sig = runsView.caseDefs[caseKey];
     const view = document.getElementById('viewSelect').value;
     const sys = document.getElementById('systemSelect').value;
-    runsHint.textContent = sig ? `case_key=${caseKey} | ${caseLabel(sig)} | matched systems=${sorted.length}` : `case_key=${caseKey} | matched systems=${sorted.length}`;
+    runsHint.textContent = sig
+      ? `${t('hint_case_key')}=${caseKey} | ${caseLabel(sig)} | ${t('hint_matched_systems')}=${sorted.length}`
+      : `${t('hint_case_key')}=${caseKey} | ${t('hint_matched_systems')}=${sorted.length}`;
     if (view === 'history') {
-      runsHint.textContent = (sig ? `case_key=${caseKey} | ${caseLabel(sig)}` : `case_key=${caseKey}`) + (sys ? ` | system=${sys}` : '') + ` | runs=${sorted.length}`;
+      runsHint.textContent = (sig ? `${t('hint_case_key')}=${caseKey} | ${caseLabel(sig)}` : `${t('hint_case_key')}=${caseKey}`) + (sys ? ` | ${t('col_system')}=${sys}` : '') + ` | ${t('hint_runs')}=${sorted.length}`;
     }
   }
 }
@@ -1270,8 +1555,8 @@ tbody.addEventListener('click', async (e) => {
     if (!res.ok) throw new Error(`failed to load run: ${res.status}`);
     const doc = await res.json();
     const run = doc.run || {};
-    runDetailsTitle.textContent = `${run.system || '(unknown)'} | ${run.timestamp || ''} | ${runIdRaw || runId}`;
-    runDetailsMeta.textContent = `engine=${run.engine || '-'} | profile=${run.invoked_profile || '-'} | target_dir=${run.target_dir || '-'}`;
+    runDetailsTitle.textContent = `${run.system || t('unknown')} | ${run.timestamp || ''} | ${runIdRaw || runId}`;
+    runDetailsMeta.textContent = `${t('engine')}=${run.engine || '-'} | ${t('profile')}=${run.invoked_profile || '-'} | ${t('target_dir')}=${run.target_dir || '-'}`;
 
     const rows = [];
     (doc.cases || []).forEach(c => {
@@ -1283,18 +1568,18 @@ tbody.addEventListener('click', async (e) => {
       });
     });
 
-    runDetailsTbody.innerHTML = '';
-    rows.forEach(r => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="text-align:left;">${r.case}</td>
-        <td>${r.op}</td>
-        <td>${fmt(r.iops,0)}</td>
-        <td>${fmt(r.bw_mib_s,2)}</td>
-        <td>${fmtLatencyMs(r.clat_p95_ms)}</td>
-        <td>${fmtLatencyMs(r.clat_p99_ms)}</td>`;
-      runDetailsTbody.appendChild(tr);
-    });
+	    runDetailsTbody.innerHTML = '';
+	    rows.forEach(r => {
+	      const tr = document.createElement('tr');
+	      tr.innerHTML = `
+	        <td style="text-align:left;">${escHtml(r.case)}</td>
+	        <td>${escHtml(opLabel(r.op))}</td>
+	        <td>${fmt(r.iops,0)}</td>
+	        <td>${fmt(r.bw_mib_s,2)}</td>
+	        <td>${fmtLatencyMs(r.clat_p95_ms)}</td>
+	        <td>${fmtLatencyMs(r.clat_p99_ms)}</td>`;
+	      runDetailsTbody.appendChild(tr);
+	    });
 
     runDetails.style.display = 'block';
   } catch (err) {
@@ -1305,58 +1590,34 @@ tbody.addEventListener('click', async (e) => {
 (async () => {
   try {
     const doc = await loadData();
-    if (doc && Array.isArray(doc.measurements) && doc.measurements.length > 0) {
-      viewMode = 'runs';
-      runsDoc = doc;
-      runsControls.style.display = 'block';
-      layoutMode = 'scoreboard';
-      sortKey = 'bw_mib_s';
-      sortDir = 'desc';
-      setHeaders([
-        { key: 'system', label: 'system' },
-        { key: 'timestamp', label: 'timestamp' },
-        { key: 'op', label: 'op' },
-        { key: 'iops', label: 'iops' },
-        { key: 'bw_mib_s', label: 'bw_mib_s' },
-        { key: 'clat_p95_ms', label: 'clat_p95_ms' },
-        { key: 'clat_p99_ms', label: 'clat_p99_ms' }
-      ]);
-      bindSortHandlers();
-      runsView = buildRunsView(doc);
-      data = [];
-    } else {
-      viewMode = 'legacy';
-      runsControls.style.display = 'none';
-      sortKey = 'seq_read_mib_s';
-      sortDir = 'asc';
-      setHeaders([
-        { key: 'device', label: '设备' },
-        { key: 'rand_read_iops', label: '随机读 IOPS' },
-        { key: 'rand_read_bw_mib', label: '随机读 MiB/s' },
-        { key: 'rand_write_iops', label: '随机写 IOPS' },
-        { key: 'rand_write_bw_mib', label: '随机写 MiB/s' },
-        { key: 'seq_read_mib_s', label: '顺序读 MiB/s' },
-        { key: 'seq_write_mib_s', label: '顺序写 MiB/s' }
-      ]);
-      bindSortHandlers();
-      data = Array.isArray(doc?.legacy_rows) ? doc.legacy_rows : [];
-    }
-  } catch (err) {
-    console.error(err);
-    viewMode = 'legacy';
-    runsControls.style.display = 'none';
-    setHeaders([
-      { key: 'device', label: '设备' },
-      { key: 'rand_read_iops', label: '随机读 IOPS' },
-      { key: 'rand_read_bw_mib', label: '随机读 MiB/s' },
-      { key: 'rand_write_iops', label: '随机写 IOPS' },
-      { key: 'rand_write_bw_mib', label: '随机写 MiB/s' },
-      { key: 'seq_read_mib_s', label: '顺序读 MiB/s' },
-      { key: 'seq_write_mib_s', label: '顺序写 MiB/s' }
-    ]);
-    bindSortHandlers();
-    data = [];
-  }
+	    if (doc && Array.isArray(doc.measurements) && doc.measurements.length > 0) {
+	      viewMode = 'runs';
+	      runsDoc = doc;
+	      runsControls.style.display = 'block';
+	      layoutMode = 'scoreboard';
+	      sortKey = 'bw_mib_s';
+	      sortDir = 'desc';
+	      currentHeaderMode = '';
+	      ensureRunsHeaders();
+	      runsView = buildRunsView(doc);
+	      data = [];
+	    } else {
+	      viewMode = 'legacy';
+	      runsControls.style.display = 'none';
+	      sortKey = 'seq_read_mib_s';
+	      sortDir = 'asc';
+	      currentHeaderMode = '';
+	      ensureLegacyHeaders();
+	      data = Array.isArray(doc?.legacy_rows) ? doc.legacy_rows : [];
+	    }
+	  } catch (err) {
+	    console.error(err);
+	    viewMode = 'legacy';
+	    runsControls.style.display = 'none';
+	    currentHeaderMode = '';
+	    ensureLegacyHeaders();
+	    data = [];
+	  }
   renderAll();
 })();
 </script>
