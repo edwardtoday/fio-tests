@@ -73,6 +73,9 @@ jobs:
           aws configure list
           # Linode Object Storage public URLs are commonly path-style; force awscli to use path-style too.
           aws configure set default.s3.addressing_style path
+          # Some S3-compatible endpoints reject AWS SigV4 streaming/chunked uploads (HTTP 411 Length Required).
+          # Disable S3 payload signing to avoid streaming uploads for small files.
+          aws configure set default.s3.payload_signing_enabled false
 
           echo "checking bucket access..."
           aws s3api head-bucket --bucket "${bucket}" --endpoint-url "${endpoint}"
@@ -80,8 +83,11 @@ jobs:
           aws s3 ls "s3://${bucket}/2025/" --endpoint-url "${endpoint}" || true
 
           echo "uploading..."
-          aws s3 cp ./run-fio.sh "s3://${bucket}/${key}" \
+          aws s3api put-object \
             --endpoint-url "${endpoint}" \
+            --bucket "${bucket}" \
+            --key "${key}" \
+            --body ./run-fio.sh \
             --content-type text/x-shellscript \
             --cache-control "max-age=60"
           echo "done"
