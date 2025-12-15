@@ -54,11 +54,21 @@ jobs:
           bucket='sansi-share'
           key='2025/run-fio.sh'
 
-          # Diagnostics (helps when keys/bucket/policy are wrong)
-          aws s3api head-bucket --bucket "${bucket}" --endpoint-url "${endpoint}" >/dev/null
+          echo "endpoint=${endpoint}"
+          echo "bucket=${bucket}"
+          echo "key=${key}"
+          echo "access_key_id_prefix=${AWS_ACCESS_KEY_ID:0:6}"
+          aws configure list
 
-          aws s3 cp ./run-fio.sh s3://sansi-share/2025/run-fio.sh \
+          echo "checking bucket access..."
+          aws s3api head-bucket --bucket "${bucket}" --endpoint-url "${endpoint}"
+          echo "listing bucket prefix..."
+          aws s3 ls "s3://${bucket}/2025/" --endpoint-url "${endpoint}" || true
+
+          echo "uploading..."
+          aws s3 cp ./run-fio.sh "s3://${bucket}/${key}" \
             --endpoint-url "${endpoint}" \
             --acl public-read \
             --content-type text/x-shellscript \
             --cache-control "max-age=60"
+          echo "done"
