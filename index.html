@@ -24,6 +24,14 @@
 
   <div id="runsControls" style="display:none; margin: 16px 0; padding: 12px; border: 1px solid #e4e7eb; border-radius: 8px; background: #fff;">
     <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+      <label>layout
+        <select id="layoutSelect">
+          <option value="scoreboard" selected>scoreboard</option>
+          <option value="matrix">matrix</option>
+          <option value="explorer">explorer</option>
+        </select>
+      </label>
+
       <label style="display:flex; gap:6px; align-items:center;">
         <input type="checkbox" id="latestOnly" checked />
         only show latest result for the same target
@@ -54,21 +62,28 @@
         </select>
       </label>
 
-      <label>system <select id="systemSelect"></select></label>
+      <div id="explorerFilters" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+        <label>system <select id="systemSelect"></select></label>
+        <label>rw <select id="rwSelect"></select></label>
+        <label>bs <select id="bsSelect"></select></label>
+        <label>qd <select id="qdSelect"></select></label>
+        <label>runtime_s <select id="runtimeSelect"></select></label>
+        <label>direct <select id="directSelect"></select></label>
+        <label>fdatasync <select id="fdatasyncSelect"></select></label>
+        <label>ioengine <select id="ioengineSelect"></select></label>
+        <label>rwmixread <select id="mixSelect"></select></label>
+        <label>size_policy <select id="sizePolicySelect"></select></label>
+        <label>case
+          <select id="caseSelect" style="min-width: 340px;"></select>
+        </label>
+      </div>
+    </div>
 
-      <label>rw <select id="rwSelect"></select></label>
-      <label>bs <select id="bsSelect"></select></label>
-      <label>qd <select id="qdSelect"></select></label>
-      <label>runtime_s <select id="runtimeSelect"></select></label>
-      <label>direct <select id="directSelect"></select></label>
-      <label>fdatasync <select id="fdatasyncSelect"></select></label>
-      <label>ioengine <select id="ioengineSelect"></select></label>
-      <label>rwmixread <select id="mixSelect"></select></label>
-      <label>size_policy <select id="sizePolicySelect"></select></label>
-
-      <label>case
-        <select id="caseSelect" style="min-width: 340px;"></select>
-      </label>
+    <div id="scoreboardPanel" style="display:none; margin-top: 12px; border-top: 1px dashed #e4e7eb; padding-top: 12px;">
+      <div style="font-size: 13px; color:#52606d; margin-bottom: 8px;">
+        Scoreboard：选择一个常用 case，一键查看各 system 的横向对比（默认 latest）。
+      </div>
+      <div id="scoreboardPresets" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
     </div>
     <div id="compareControls" style="display:none; margin-top: 12px; border-top: 1px dashed #e4e7eb; padding-top: 12px;">
       <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start;">
@@ -185,6 +200,7 @@ let sortKey = 'seq_read_mib_s';
 let sortDir = 'asc';
 let headerCells = [];
 let currentHeaderMode = ''; // legacy|runs|compare
+let layoutMode = 'scoreboard'; // scoreboard|matrix|explorer
 
 function setHeaders(headers) {
   theadRow.innerHTML = headers.map(h => `<th data-key="${h.key}">${h.label}</th>`).join('');
@@ -373,6 +389,17 @@ function ensureChart(chartType, datasetCount, datasetLabels) {
 }
 
 function renderChart(sorted) {
+  // Matrix/compare focuses on tables; hide chart to avoid conflicting signals.
+  if (viewMode === 'runs' && layoutMode === 'matrix') {
+    bwCanvas.style.height = '80px';
+    if (bwChart) {
+      bwChart.data.labels = [];
+      bwChart.data.datasets.forEach(ds => ds.data = []);
+      bwChart.update();
+    }
+    return;
+  }
+
   if (viewMode === 'legacy') {
     // legacy: 设备为行（bar 横向）
     const datasetCount = 4;
@@ -560,8 +587,12 @@ function buildRunsView(doc) {
   const caseSelect = document.getElementById('caseSelect');
   const opSelect = document.getElementById('opSelect');
   const viewSelect = document.getElementById('viewSelect');
+  const layoutSelect = document.getElementById('layoutSelect');
   const systemSelect = document.getElementById('systemSelect');
   const compareControls = document.getElementById('compareControls');
+  const scoreboardPanel = document.getElementById('scoreboardPanel');
+  const scoreboardPresets = document.getElementById('scoreboardPresets');
+  const explorerFilters = document.getElementById('explorerFilters');
   const compareGroupBy = document.getElementById('compareGroupBy');
   const compareSystems = document.getElementById('compareSystems');
   const compareCases = document.getElementById('compareCases');
@@ -758,6 +789,120 @@ function buildRunsView(doc) {
   rebuildCaseOptions();
   rebuildCompareOptions();
 
+  function resetExplorerFilters() {
+    [rwSelect, bsSelect, qdSelect, runtimeSelect, directSelect, fdatasyncSelect, ioengineSelect, mixSelect, sizePolicySelect].forEach(sel => {
+      if (!sel) return;
+      sel.value = '';
+    });
+    systemSelect.value = '';
+  }
+
+  function findCaseKey(match) {
+    // Prefer fixed 1G cases for scoreboard presets to keep comparability.
+    const keys = Object.keys(caseDefs);
+    for (const ck of keys) {
+      const sig = caseDefs[ck] || {};
+      if (match(sig)) return ck;
+    }
+    return '';
+  }
+
+  function addPreset(label, { rw, bs, qd, direct, fdatasync, ioengine, runtime_s }, { op, metric }) {
+    const ck = findCaseKey(sig =>
+      sig.rw === rw &&
+      sig.bs === bs &&
+      sig.qd === qd &&
+      sig.direct === direct &&
+      sig.fdatasync === fdatasync &&
+      sig.ioengine === ioengine &&
+      sig.runtime_s === runtime_s
+    );
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = label;
+    btn.style.padding = '6px 10px';
+    btn.style.border = '1px solid #d9e2ec';
+    btn.style.borderRadius = '6px';
+    btn.style.background = '#fff';
+    btn.style.cursor = ck ? 'pointer' : 'not-allowed';
+    btn.style.opacity = ck ? '1' : '0.4';
+    btn.addEventListener('click', () => {
+      if (!ck) return;
+      layoutSelect.value = 'scoreboard';
+      layoutMode = 'scoreboard';
+
+      resetExplorerFilters();
+      // Ensure op/metric matches the preset intent
+      opSelect.value = op;
+      document.getElementById('metricSelect').value = metric;
+
+      // Force scoreboard defaults
+      viewSelect.value = 'by_system';
+      document.getElementById('latestOnly').checked = true;
+
+      rebuildCaseOptions(ck);
+      caseSelect.value = ck;
+      rebuildCompareOptions();
+      applyLayoutMode();
+      renderAll();
+    });
+    scoreboardPresets.appendChild(btn);
+  }
+
+  function rebuildScoreboardPresets() {
+    scoreboardPresets.innerHTML = '';
+    const aio = 'native_aio';
+    const rt120 = 120;
+    addPreset('4k randread qd1',  { rw:'randread',  bs:'4k', qd:1,  direct:1, fdatasync:0, ioengine:aio, runtime_s:rt120 }, { op:'read',  metric:'iops' });
+    addPreset('4k randwrite qd1', { rw:'randwrite', bs:'4k', qd:1,  direct:1, fdatasync:0, ioengine:aio, runtime_s:rt120 }, { op:'write', metric:'iops' });
+    addPreset('4k randread qd4',  { rw:'randread',  bs:'4k', qd:4,  direct:1, fdatasync:0, ioengine:aio, runtime_s:rt120 }, { op:'read',  metric:'iops' });
+    addPreset('4k randwrite qd4', { rw:'randwrite', bs:'4k', qd:4,  direct:1, fdatasync:0, ioengine:aio, runtime_s:rt120 }, { op:'write', metric:'iops' });
+    addPreset('1M seq read',      { rw:'read',      bs:'1M', qd:64, direct:1, fdatasync:0, ioengine:aio, runtime_s:rt120 }, { op:'read',  metric:'bw_mib_s' });
+    addPreset('1M seq write',     { rw:'write',     bs:'1M', qd:64, direct:1, fdatasync:0, ioengine:aio, runtime_s:rt120 }, { op:'write', metric:'bw_mib_s' });
+    // DB-like fsync path uses sync engine and buffered IO
+    addPreset('fdatasync write 4k', { rw:'write', bs:'4k', qd:1, direct:0, fdatasync:1, ioengine:'sync', runtime_s:60 }, { op:'write', metric:'clat_p95_ms' });
+  }
+
+  function applyLayoutMode() {
+    if (layoutMode === 'matrix') {
+      explorerFilters.style.display = 'none';
+      scoreboardPanel.style.display = 'none';
+      compareControls.style.display = 'block';
+      // Matrix view is essentially compare/group-by-metric by default
+      viewSelect.value = 'compare';
+      compareGroupBy.value = 'metric';
+      // For matrix, op=auto is useful; keep user's choice
+    } else if (layoutMode === 'explorer') {
+      explorerFilters.style.display = 'flex';
+      scoreboardPanel.style.display = 'none';
+      compareControls.style.display = (viewSelect.value === 'compare') ? 'block' : 'none';
+    } else {
+      // scoreboard
+      explorerFilters.style.display = 'none';
+      scoreboardPanel.style.display = 'block';
+      compareControls.style.display = 'none';
+      viewSelect.value = 'by_system';
+    }
+  }
+
+  rebuildScoreboardPresets();
+  applyLayoutMode();
+
+  layoutSelect.addEventListener('change', () => {
+    layoutMode = layoutSelect.value;
+    if (layoutMode === 'matrix') {
+      viewSelect.value = 'compare';
+      compareGroupBy.value = 'metric';
+      document.getElementById('latestOnly').checked = false;
+    } else if (layoutMode === 'scoreboard') {
+      viewSelect.value = 'by_system';
+      document.getElementById('latestOnly').checked = true;
+    }
+    applyLayoutMode();
+    rebuildCompareOptions();
+    renderAll();
+  });
+
   return { caseDefs, measurements, caseOps };
 }
 
@@ -765,6 +910,7 @@ let runsDoc = null;
 let runsView = null;
 
 function buildRunsRows() {
+  if (viewMode === 'runs' && layoutMode === 'matrix') return [];
   const op = document.getElementById('opSelect').value;
   const caseKey = document.getElementById('caseSelect').value;
   const latestOnly = document.getElementById('latestOnly').checked;
@@ -944,7 +1090,7 @@ function renderCompare() {
 }
 
 function renderAll() {
-  if (viewMode === 'runs' && document.getElementById('viewSelect')?.value === 'compare') {
+  if (viewMode === 'runs' && (layoutMode === 'matrix' || document.getElementById('viewSelect')?.value === 'compare')) {
     renderCompare();
     return;
   }
@@ -1022,6 +1168,7 @@ tbody.addEventListener('click', async (e) => {
       viewMode = 'runs';
       runsDoc = doc;
       runsControls.style.display = 'block';
+      layoutMode = 'scoreboard';
       sortKey = 'bw_mib_s';
       sortDir = 'desc';
       setHeaders([
