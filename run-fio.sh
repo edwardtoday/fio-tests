@@ -9,6 +9,7 @@ set -euo pipefail
 # Notes:
 # - Creates a temporary file "fio-test.bin" in target-dir and deletes it on exit.
 # - Writes logs to --out (default: target-dir). Logs are kept.
+# - On push, this script is auto-synced to Linode Object Storage via GitHub Actions.
 
 PROFILE="standard"
 SYSTEM_NAME=""
