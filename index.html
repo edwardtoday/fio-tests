@@ -45,6 +45,13 @@
     .langMini { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid var(--border); border-radius: 10px; background:#fff; box-shadow: var(--shadow); color: var(--muted); font-size: 13px; }
     .langMini select { border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; background: #fff; color: var(--text); }
     .toast { position: fixed; top: 14px; right: 14px; background: rgba(15, 23, 42, 0.92); color: #fff; border-radius: 10px; padding: 10px 12px; font-size: 13px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); display:none; z-index: 50; }
+    .drawer { position: fixed; z-index: 40; top: 72px; right: 16px; bottom: 16px; width: min(980px, calc(100vw - 32px)); overflow: auto; }
+    .drawer table { margin: 10px 0 0; }
+    .drawerHeader { position: sticky; top: 0; background: var(--card); z-index: 1; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+    .drawerHeader .muted { color: var(--muted); font-size: 13px; margin-top: 8px; }
+    @media (max-width: 720px) {
+      .drawer { left: 12px; right: 12px; width: auto; top: 64px; bottom: 12px; }
+    }
   </style>
 </head>
 <body>
@@ -194,12 +201,14 @@
     <tbody></tbody>
   </table>
 
-		  <div id="runDetails" class="card" style="display:none; margin: 16px 0; padding: 12px;">
-		    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 8px;">
+		  <div id="runDetails" class="card drawer" tabindex="-1" style="display:none; padding: 12px;">
+		    <div class="drawerHeader">
+		      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
 		      <div id="runDetailsTitle" style="font-weight: 600;"></div>
 		      <button id="runDetailsClose" type="button" data-i18n="close">关闭</button>
 		    </div>
-		    <div id="runDetailsMeta" style="color:#52606d; font-size: 13px; margin-bottom: 10px;"></div>
+		    <div id="runDetailsMeta" class="muted"></div>
+		    </div>
 		    <table id="runDetailsTable" style="margin: 0;">
 	      <thead>
 	        <tr>
@@ -215,12 +224,14 @@
 		    </table>
 		  </div>
 
-		  <div id="systemDetails" class="card" style="display:none; margin: 16px 0; padding: 12px;">
-		    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 8px;">
+		  <div id="systemDetails" class="card drawer" tabindex="-1" style="display:none; padding: 12px;">
+		    <div class="drawerHeader">
+		      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
 		      <div id="systemDetailsTitle" style="font-weight: 600;"></div>
 		      <button id="systemDetailsClose" type="button" data-i18n="close">关闭</button>
 		    </div>
-		    <div id="systemDetailsMeta" style="color:#52606d; font-size: 13px; margin-bottom: 10px;"></div>
+		    <div id="systemDetailsMeta" class="muted"></div>
+		    </div>
 		    <table id="systemDetailsTable" style="margin: 0;">
 		      <thead>
 		        <tr>
@@ -537,8 +548,10 @@ function openSystemDetails(system) {
   });
 
   systemDetailsSystem = sys;
-  runDetails.style.display = 'none';
   systemDetails.style.display = 'block';
+  runDetails.style.display = 'none';
+  setDrawerOpen(true);
+  systemDetails.focus?.();
   syncStateToHash();
 }
 
@@ -576,8 +589,10 @@ async function openRunDetails(runIdRaw) {
       runDetailsTbody.appendChild(tr);
     });
 
-    systemDetails.style.display = 'none';
     runDetails.style.display = 'block';
+    systemDetails.style.display = 'none';
+    setDrawerOpen(true);
+    runDetails.focus?.();
     syncStateToHash();
   } catch (err) {
     console.error(err);
@@ -867,25 +882,36 @@ const runDetails = document.getElementById('runDetails');
 const runDetailsTitle = document.getElementById('runDetailsTitle');
 const runDetailsMeta = document.getElementById('runDetailsMeta');
 const runDetailsTbody = document.querySelector('#runDetailsTable tbody');
-document.getElementById('runDetailsClose').addEventListener('click', () => {
+function setDrawerOpen(isOpen) {
+  document.body.style.overflow = isOpen ? 'hidden' : '';
+}
+function closeDrawers() {
   runDetails.style.display = 'none';
+  systemDetails.style.display = 'none';
+  systemDetailsSystem = '';
+  setDrawerOpen(false);
   syncStateToHash();
-});
+}
+document.getElementById('runDetailsClose').addEventListener('click', closeDrawers);
 
 const systemDetails = document.getElementById('systemDetails');
 const systemDetailsTitle = document.getElementById('systemDetailsTitle');
 const systemDetailsMeta = document.getElementById('systemDetailsMeta');
 const systemDetailsTbody = document.querySelector('#systemDetailsTable tbody');
-document.getElementById('systemDetailsClose').addEventListener('click', () => {
-  systemDetails.style.display = 'none';
-  systemDetailsSystem = '';
-  syncStateToHash();
-});
+document.getElementById('systemDetailsClose').addEventListener('click', closeDrawers);
 systemDetailsTbody.addEventListener('click', async (e) => {
   const aRun = e.target.closest('a[data-runid]');
   if (!aRun) return;
   e.preventDefault();
   await openRunDetails(aRun.dataset.runid);
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (runDetails.style.display !== 'none' || systemDetails.style.display !== 'none') {
+    e.preventDefault();
+    closeDrawers();
+  }
 });
 
 let viewMode = 'legacy'; // legacy|runs
