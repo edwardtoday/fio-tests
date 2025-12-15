@@ -443,6 +443,8 @@ const I18N = {
     comparability_ok: '当前选择口径一致（可横向对比）。',
     comparability_warn: '当前选择混合了多种口径，横向对比可能误导：',
     comparability_fields: '差异字段',
+    comparability_fix: '一键修正：点击某个取值，自动收敛到单一口径',
+    comparability_select_all: '恢复全选',
     engine: '引擎',
     profile: 'profile',
     target_dir: 'target_dir',
@@ -565,6 +567,8 @@ const I18N = {
     comparability_ok: 'Current selection is comparable.',
     comparability_warn: 'Mixed comparability signature detected:',
     comparability_fields: 'Fields',
+    comparability_fix: 'Quick fix: click a value to narrow down',
+    comparability_select_all: 'Select all',
     engine: 'engine',
     profile: 'profile',
     target_dir: 'target_dir',
@@ -599,7 +603,7 @@ function renderComparabilityHint(caseKeys) {
     comparabilityHint.style.display = 'none';
     return;
   }
-  const keys = Array.isArray(caseKeys) ? caseKeys.filter(Boolean) : [];
+  const keys = Array.from(new Set(Array.isArray(caseKeys) ? caseKeys.filter(Boolean) : []));
   if (keys.length <= 1) {
     comparabilityHint.style.display = 'none';
     return;
@@ -617,16 +621,45 @@ function renderComparabilityHint(caseKeys) {
     { key: 'size_policy', label: 'size_policy', get: (sig) => sig.size_policy?.mode },
   ];
 
+  const fieldByKey = new Map(fields.map(f => [f.key, f]));
+
+  function selectAllCompareCases() {
+    const casesSel = document.getElementById('compareCases');
+    if (!casesSel) return;
+    Array.from(casesSel.options).forEach(o => { o.selected = true; });
+    renderAll();
+  }
+
+  function applyCompareFix(fieldKey, valueStr) {
+    const casesSel = document.getElementById('compareCases');
+    if (!casesSel) return;
+    const f = fieldByKey.get(fieldKey);
+    if (!f) return;
+    let kept = 0;
+    Array.from(casesSel.options).forEach(o => {
+      const sig = runsView.caseDefs?.[o.value] || {};
+      const v = String(f.get(sig));
+      const keep = (v === valueStr);
+      o.selected = keep;
+      if (keep) kept++;
+    });
+    if (kept === 0) return;
+    renderAll();
+  }
+
   const diffs = [];
   fields.forEach(f => {
-    const s = new Set();
+    const count = new Map();
     keys.forEach(ck => {
       const sig = runsView.caseDefs?.[ck] || {};
       const v = f.get(sig);
-      s.add(String(v));
+      const sv = String(v);
+      count.set(sv, (count.get(sv) || 0) + 1);
     });
-    if (s.size > 1) {
-      const vals = Array.from(s).sort((a,b)=>a.localeCompare(b,'zh-Hans'));
+    if (count.size > 1) {
+      const vals = Array.from(count.entries())
+        .map(([value, n]) => ({ value, n }))
+        .sort((a, b) => (b.n - a.n) || String(a.value).localeCompare(String(b.value), 'zh-Hans'));
       diffs.push({ key: f.key, label: f.label, values: vals });
     }
   });
@@ -639,10 +672,53 @@ function renderComparabilityHint(caseKeys) {
   }
 
   comparabilityHint.className = 'notice noticeWarn';
-  const text = `${t('comparability_warn')} ${t('comparability_fields')}: ` + diffs
-    .map(d => `${d.label}=[${d.values.join(', ')}]`)
-    .join('；');
-  comparabilityHint.textContent = text;
+  comparabilityHint.innerHTML = '';
+
+  const line1 = document.createElement('div');
+  line1.textContent = t('comparability_warn');
+  comparabilityHint.appendChild(line1);
+
+  const line2 = document.createElement('div');
+  line2.style.marginTop = '6px';
+  line2.style.color = 'var(--muted)';
+  line2.textContent = t('comparability_fix');
+  comparabilityHint.appendChild(line2);
+
+  const resetRow = document.createElement('div');
+  resetRow.style.marginTop = '8px';
+  const resetBtn = document.createElement('button');
+  resetBtn.type = 'button';
+  resetBtn.className = 'btn';
+  resetBtn.textContent = t('comparability_select_all');
+  resetBtn.addEventListener('click', selectAllCompareCases);
+  resetRow.appendChild(resetBtn);
+  comparabilityHint.appendChild(resetRow);
+
+  diffs.forEach(d => {
+    const row = document.createElement('div');
+    row.style.marginTop = '10px';
+    row.style.display = 'flex';
+    row.style.gap = '10px';
+    row.style.flexWrap = 'wrap';
+    row.style.alignItems = 'center';
+
+    const k = document.createElement('span');
+    k.style.fontWeight = '600';
+    k.textContent = `${d.label}:`;
+    row.appendChild(k);
+
+    d.values.forEach(v => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn';
+      btn.textContent = `${v.value} (${v.n}/${keys.length})`;
+      btn.addEventListener('click', () => applyCompareFix(d.key, v.value));
+      row.appendChild(btn);
+    });
+
+    comparabilityHint.appendChild(row);
+  });
+
   comparabilityHint.style.display = 'block';
 }
 
