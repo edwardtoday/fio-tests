@@ -225,43 +225,43 @@
 		    </table>
 		  </div>
 
-		  <div id="systemDetails" class="card drawer" tabindex="-1" style="display:none; padding: 12px;">
-		    <div class="drawerHeader">
-		      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-		      <div id="systemDetailsTitle" style="font-weight: 600;"></div>
-		      <button id="systemDetailsClose" type="button" data-i18n="close">关闭</button>
-		    </div>
-		    <div id="systemDetailsMeta" class="muted"></div>
-		    <div style="margin-top: 10px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
-		      <span style="font-weight: 600; color: var(--text);" data-i18n="history_title">历史趋势</span>
-		      <label style="display:flex; gap:6px; align-items:center;">
-		        <span data-i18n="history_case">用例</span>
-		        <select id="systemHistoryCase" style="min-width: 360px;"></select>
-		      </label>
-		      <label style="display:flex; gap:6px; align-items:center;">
-		        <span data-i18n="metric">指标</span>
-		        <select id="systemHistoryMetric">
-		          <option value="bw_mib_s" selected data-i18n="metric_bw">吞吐 MiB/s</option>
-		          <option value="iops" data-i18n="metric_iops">IOPS</option>
-		          <option value="clat_p95_ms" data-i18n="metric_clat_p95">延迟 p95 (ms)</option>
-		          <option value="clat_p99_ms" data-i18n="metric_clat_p99">延迟 p99 (ms)</option>
-		        </select>
-		      </label>
-		      <label style="display:flex; gap:6px; align-items:center;">
-		        <span data-i18n="history_last_n">最近N次</span>
-		        <select id="systemHistoryN">
-		          <option value="5">5</option>
-		          <option value="10" selected>10</option>
-		          <option value="20">20</option>
-		          <option value="50">50</option>
-		        </select>
-		      </label>
-		    </div>
-		    <div style="margin-top: 10px;">
-		      <canvas id="systemHistoryCanvas" style="height: 220px;"></canvas>
-		    </div>
-		    </div>
-		    <table id="systemDetailsTable" style="margin: 0;">
+			  <div id="systemDetails" class="card drawer" tabindex="-1" style="display:none; padding: 12px;">
+			    <div class="drawerHeader">
+			      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+			      <div id="systemDetailsTitle" style="font-weight: 600;"></div>
+			      <button id="systemDetailsClose" type="button" data-i18n="close">关闭</button>
+			    </div>
+			    <div id="systemDetailsMeta" class="muted"></div>
+			    </div>
+			    <div style="margin-top: 10px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+			      <span style="font-weight: 600; color: var(--text);" data-i18n="history_title">历史趋势</span>
+			      <label style="display:flex; gap:6px; align-items:center;">
+			        <span data-i18n="history_case">用例</span>
+			        <select id="systemHistoryCase" style="min-width: 360px;"></select>
+			      </label>
+			      <label style="display:flex; gap:6px; align-items:center;">
+			        <span data-i18n="metric">指标</span>
+			        <select id="systemHistoryMetric">
+			          <option value="bw_mib_s" selected data-i18n="metric_bw">吞吐 MiB/s</option>
+			          <option value="iops" data-i18n="metric_iops">IOPS</option>
+			          <option value="clat_p95_ms" data-i18n="metric_clat_p95">延迟 p95 (ms)</option>
+			          <option value="clat_p99_ms" data-i18n="metric_clat_p99">延迟 p99 (ms)</option>
+			        </select>
+			      </label>
+			      <label style="display:flex; gap:6px; align-items:center;">
+			        <span data-i18n="history_last_n">最近N次</span>
+			        <select id="systemHistoryN">
+			          <option value="5">5</option>
+			          <option value="10" selected>10</option>
+			          <option value="20">20</option>
+			          <option value="50">50</option>
+			        </select>
+			      </label>
+			    </div>
+			    <div style="margin-top: 10px;">
+			      <canvas id="systemHistoryCanvas" style="height: 220px;"></canvas>
+			    </div>
+			    <table id="systemDetailsTable" style="margin: 0;">
 		      <thead>
 		        <tr>
 		          <th data-key="case" data-i18n="case">用例</th>
