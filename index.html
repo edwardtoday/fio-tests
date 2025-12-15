@@ -49,6 +49,7 @@
     .drawer table { margin: 10px 0 0; }
     .drawerHeader { position: sticky; top: 0; background: var(--card); z-index: 1; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
     .drawerHeader .muted { color: var(--muted); font-size: 13px; margin-top: 8px; }
+    .groupRow td { text-align: left; font-weight: 600; background: #f8fafc; color: var(--text); }
     @media (max-width: 720px) {
       .drawer { left: 12px; right: 12px; width: auto; top: 64px; bottom: 12px; }
     }
@@ -231,6 +232,34 @@
 		      <button id="systemDetailsClose" type="button" data-i18n="close">关闭</button>
 		    </div>
 		    <div id="systemDetailsMeta" class="muted"></div>
+		    <div style="margin-top: 10px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+		      <span style="font-weight: 600; color: var(--text);" data-i18n="history_title">历史趋势</span>
+		      <label style="display:flex; gap:6px; align-items:center;">
+		        <span data-i18n="history_case">用例</span>
+		        <select id="systemHistoryCase" style="min-width: 360px;"></select>
+		      </label>
+		      <label style="display:flex; gap:6px; align-items:center;">
+		        <span data-i18n="metric">指标</span>
+		        <select id="systemHistoryMetric">
+		          <option value="bw_mib_s" selected data-i18n="metric_bw">吞吐 MiB/s</option>
+		          <option value="iops" data-i18n="metric_iops">IOPS</option>
+		          <option value="clat_p95_ms" data-i18n="metric_clat_p95">延迟 p95 (ms)</option>
+		          <option value="clat_p99_ms" data-i18n="metric_clat_p99">延迟 p99 (ms)</option>
+		        </select>
+		      </label>
+		      <label style="display:flex; gap:6px; align-items:center;">
+		        <span data-i18n="history_last_n">最近N次</span>
+		        <select id="systemHistoryN">
+		          <option value="5">5</option>
+		          <option value="10" selected>10</option>
+		          <option value="20">20</option>
+		          <option value="50">50</option>
+		        </select>
+		      </label>
+		    </div>
+		    <div style="margin-top: 10px;">
+		      <canvas id="systemHistoryCanvas" style="height: 220px;"></canvas>
+		    </div>
 		    </div>
 		    <table id="systemDetailsTable" style="margin: 0;">
 		      <thead>
@@ -358,6 +387,13 @@ const I18N = {
     unknown: '(未知)',
     run_id: '运行ID',
     system_details: '系统详情',
+    group_random: '随机',
+    group_sequential: '顺序',
+    group_durable: '落盘',
+    group_sustained: '持续写',
+    history_title: '历史趋势',
+    history_case: '用例',
+    history_last_n: '最近N次',
     engine: '引擎',
     profile: 'profile',
     target_dir: 'target_dir',
@@ -463,6 +499,13 @@ const I18N = {
     unknown: '(unknown)',
     run_id: 'run_id',
     system_details: 'System details',
+    group_random: 'Random',
+    group_sequential: 'Sequential',
+    group_durable: 'Durable (fdatasync)',
+    group_sustained: 'Sustained',
+    history_title: 'History',
+    history_case: 'Case',
+    history_last_n: 'Last N',
     engine: 'engine',
     profile: 'profile',
     target_dir: 'target_dir',
@@ -496,6 +539,20 @@ function openSystemDetails(system) {
   const sys = String(system || '');
   if (!sys) return;
 
+  function classify(sig) {
+    if (!sig || typeof sig !== 'object') return t('group_random');
+    // 中文说明：
+    // 1) fdatasync 落盘优先单独分组（更贴近 DB 写路径）
+    // 2) size_policy 非 fixed 视为持续写（包含大文件顺序写、持续随机写等）
+    // 3) 其余按 rw 归为随机/顺序
+    if (sig.fdatasync) return t('group_durable');
+    const spMode = sig.size_policy?.mode;
+    if (spMode && String(spMode) !== 'fixed') return t('group_sustained');
+    const rw = String(sig.rw || '');
+    if (rw.startsWith('rand')) return t('group_random');
+    return t('group_sequential');
+  }
+
   // 中文说明：latest 定义为“该 system 对每个 case_key/op 选择最新 timestamp 的 measurement”
   const latest = new Map(); // `${case_key}|${op}` -> measurement
   (runsDoc.measurements || []).forEach(m => {
@@ -511,6 +568,7 @@ function openSystemDetails(system) {
     rows.push({
       case_key: m.case_key,
       case_label: caseLabel(sig),
+      group: classify(sig),
       op: m.op,
       iops: m.iops,
       bw_mib_s: m.bw_mib_s,
@@ -521,6 +579,8 @@ function openSystemDetails(system) {
     });
   });
   rows.sort((a, b) => {
+    const g = String(a.group).localeCompare(String(b.group), 'zh-Hans');
+    if (g !== 0) return g;
     const c = String(a.case_label).localeCompare(String(b.case_label), 'zh-Hans');
     if (c !== 0) return c;
     return String(a.op).localeCompare(String(b.op));
@@ -528,8 +588,40 @@ function openSystemDetails(system) {
 
   systemDetailsTitle.textContent = `${t('system_details')}: ${sys}`;
   systemDetailsMeta.textContent = `${t('compare_cases_label')}=${rows.length}`;
+  // history options
+  if (systemHistoryCase) {
+    const options = [];
+    const seen = new Set();
+    (runsDoc.measurements || []).forEach(m => {
+      if (!m || m.system !== sys) return;
+      const k = `${m.case_key}|${m.op}`;
+      if (seen.has(k)) return;
+      seen.add(k);
+      const sig = runsView.caseDefs[m.case_key] || {};
+      options.push({ value: k, label: `${caseLabel(sig)} | ${opLabel(m.op)}` });
+    });
+    options.sort((a, b) => String(a.label).localeCompare(String(b.label), 'zh-Hans'));
+    systemHistoryCase.innerHTML = '';
+    options.forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o.value;
+      opt.textContent = o.label;
+      systemHistoryCase.appendChild(opt);
+    });
+    if (!systemHistoryCase.value && options.length) systemHistoryCase.value = options[0].value;
+  }
   systemDetailsTbody.innerHTML = '';
+
+  let lastGroup = '';
   rows.forEach(r => {
+    if (r.group !== lastGroup) {
+      lastGroup = r.group;
+      const trG = document.createElement('tr');
+      trG.className = 'groupRow';
+      trG.innerHTML = `<td colspan="999">${escHtml(r.group)}</td>`;
+      systemDetailsTbody.appendChild(trG);
+    }
+
     const tr = document.createElement('tr');
     const runIdEnc = encodeURIComponent(String(r.run_id || ''));
     tr.innerHTML = `
@@ -552,6 +644,7 @@ function openSystemDetails(system) {
   runDetails.style.display = 'none';
   setDrawerOpen(true);
   systemDetails.focus?.();
+  renderSystemHistory();
   syncStateToHash();
 }
 
@@ -746,6 +839,21 @@ function applyStateFromHash() {
     if (p.detail_system) {
       openSystemDetails(p.detail_system);
     }
+
+    // system details history state (optional)
+    if (p.detail_case_op) {
+      const sel = document.getElementById('systemHistoryCase');
+      if (sel && optExists(sel, p.detail_case_op)) sel.value = p.detail_case_op;
+    }
+    if (p.detail_metric) {
+      const sel = document.getElementById('systemHistoryMetric');
+      if (sel && optExists(sel, p.detail_metric)) sel.value = p.detail_metric;
+    }
+    if (p.detail_n) {
+      const sel = document.getElementById('systemHistoryN');
+      if (sel && optExists(sel, p.detail_n)) sel.value = p.detail_n;
+    }
+    renderSystemHistory();
   } finally {
     suppressHashSync = false;
   }
@@ -792,6 +900,9 @@ function syncStateToHash() {
 
   if (systemDetails && systemDetails.style.display !== 'none' && systemDetailsSystem) {
     params.detail_system = systemDetailsSystem;
+    if (systemHistoryCase?.value) params.detail_case_op = systemHistoryCase.value;
+    if (systemHistoryMetric?.value) params.detail_metric = systemHistoryMetric.value;
+    if (systemHistoryN?.value) params.detail_n = systemHistoryN.value;
   }
 
   setHashParams(params);
@@ -898,6 +1009,11 @@ const systemDetails = document.getElementById('systemDetails');
 const systemDetailsTitle = document.getElementById('systemDetailsTitle');
 const systemDetailsMeta = document.getElementById('systemDetailsMeta');
 const systemDetailsTbody = document.querySelector('#systemDetailsTable tbody');
+const systemHistoryCase = document.getElementById('systemHistoryCase');
+const systemHistoryMetric = document.getElementById('systemHistoryMetric');
+const systemHistoryN = document.getElementById('systemHistoryN');
+const systemHistoryCanvas = document.getElementById('systemHistoryCanvas');
+let systemHistoryChart = null;
 document.getElementById('systemDetailsClose').addEventListener('click', closeDrawers);
 systemDetailsTbody.addEventListener('click', async (e) => {
   const aRun = e.target.closest('a[data-runid]');
@@ -905,6 +1021,51 @@ systemDetailsTbody.addEventListener('click', async (e) => {
   e.preventDefault();
   await openRunDetails(aRun.dataset.runid);
 });
+function ensureSystemHistoryChart() {
+  if (!systemHistoryCanvas) return null;
+  if (systemHistoryChart) return systemHistoryChart;
+  systemHistoryChart = new Chart(systemHistoryCanvas.getContext('2d'), {
+    type: 'line',
+    data: { labels: [], datasets: [{ label: '', data: [], borderColor: '#0ea5e9', backgroundColor: 'rgba(14,165,233,0.15)', tension: 0.2, pointRadius: 2, borderWidth: 2, fill: true }] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, datalabels: { display: false } },
+      scales: {
+        x: { ticks: { maxRotation: 0, minRotation: 0, autoSkip: true, maxTicksLimit: 10 } },
+        y: { beginAtZero: false }
+      }
+    }
+  });
+  return systemHistoryChart;
+}
+function renderSystemHistory() {
+  if (viewMode !== 'runs' || !runsDoc || !runsView) return;
+  if (!systemDetailsSystem) return;
+  const sel = systemHistoryCase?.value || '';
+  if (!sel) return;
+  const [caseKey, op] = sel.split('|');
+  const metric = systemHistoryMetric?.value || 'bw_mib_s';
+  const n = Number(systemHistoryN?.value || 10) || 10;
+
+  const list = (runsDoc.measurements || [])
+    .filter(m => m && m.system === systemDetailsSystem && m.case_key === caseKey && m.op === op)
+    .sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp)));
+  const sliced = list.slice(Math.max(0, list.length - n));
+  const labels = sliced.map(m => String(m.timestamp || '').replace('T', ' ').replace('Z', ''));
+  const values = sliced.map(m => m[metric] ?? null);
+
+  const chart = ensureSystemHistoryChart();
+  if (!chart) return;
+  chart.data.labels = labels;
+  chart.data.datasets[0].label = `${metricLabel(metric)}`;
+  chart.data.datasets[0].data = values;
+  chart.options.scales.y.beginAtZero = !(String(metric).startsWith('clat_'));
+  chart.update();
+}
+systemHistoryCase?.addEventListener('change', () => { renderSystemHistory(); syncStateToHash(); });
+systemHistoryMetric?.addEventListener('change', () => { renderSystemHistory(); syncStateToHash(); });
+systemHistoryN?.addEventListener('change', () => { renderSystemHistory(); syncStateToHash(); });
 
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
@@ -935,6 +1096,7 @@ if (langSelect) {
     // 语言切换后强制重建表头与预设按钮，避免出现旧语言残留。
     currentHeaderMode = '';
     if (runsView && typeof runsView.rebuildScoreboardPresets === 'function') runsView.rebuildScoreboardPresets();
+    if (systemDetailsSystem && systemDetails?.style.display !== 'none') openSystemDetails(systemDetailsSystem);
     renderAll();
   });
 }

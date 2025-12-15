@@ -26,14 +26,14 @@
 - [x] M1.1.1 生成某 system 的 “latest per case/op” 全量列表
   - 说明：latest 定义为“该 system 对每个 case_key/op 选择最新包含该 case 的 run”
   - 验收：同一 system 在页面能看到其全部 case 的最新值（含 iops/bw/p95/p99）
-- [ ] M1.1.2 全量表分组展示（至少：随机、顺序、落盘、持续写）
+- [x] M1.1.2 全量表分组展示（至少：随机、顺序、落盘、持续写）
   - 验收：用户能在详情里快速定位到想看的类别；不需要滚很久
-- [ ] M1.1.3 每行可追溯（展示 run_id/timestamp；可一键打开 run.json）
+- [x] M1.1.3 每行可追溯（展示 run_id/timestamp；可一键打开 run.json）
   - 验收：任意 case 行可打开对应 `results/runs/<run_id>.json`
 
 ### M1.2 历史与波动（用于排查异常）
 
-- [ ] M1.2.1 在 system 详情中，选择某个 case 后显示最近 N 次历史（折线）
+- [x] M1.2.1 在 system 详情中，选择某个 case 后显示最近 N 次历史（折线）
   - 默认：N=10（可调）
   - 验收：能看到 iops/bw/lat 的变化趋势，并可切换 metric
 - [ ] M1.2.2 标注异常点（简单规则即可：例如偏离最近中位数超过阈值）
