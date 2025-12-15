@@ -44,6 +44,7 @@
     .repoLink svg { width: 18px; height: 18px; fill: currentColor; }
     .langMini { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid var(--border); border-radius: 10px; background:#fff; box-shadow: var(--shadow); color: var(--muted); font-size: 13px; }
     .langMini select { border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; background: #fff; color: var(--text); }
+    .toast { position: fixed; top: 14px; right: 14px; background: rgba(15, 23, 42, 0.92); color: #fff; border-radius: 10px; padding: 10px 12px; font-size: 13px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); display:none; z-index: 50; }
   </style>
 </head>
 <body>
@@ -57,6 +58,13 @@
           <option value="en">English</option>
         </select>
       </div>
+      <button id="copyLinkBtn" type="button" class="repoLink" aria-label="Copy link" title="Copy link">
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M7.775 3.275a3.25 3.25 0 0 1 4.596 0l.354.354a3.25 3.25 0 0 1 0 4.596l-1.593 1.593a3.25 3.25 0 0 1-4.596 0 .75.75 0 0 1 1.06-1.06 1.75 1.75 0 0 0 2.475 0l1.593-1.593a1.75 1.75 0 0 0 0-2.475l-.354-.354a1.75 1.75 0 0 0-2.475 0l-.884.884a.75.75 0 0 1-1.06-1.06l.884-.884Z"></path>
+          <path d="M8.224 12.725a3.25 3.25 0 0 1-4.596 0l-.354-.354a3.25 3.25 0 0 1 0-4.596l1.593-1.593a3.25 3.25 0 0 1 4.596 0 .75.75 0 1 1-1.06 1.06 1.75 1.75 0 0 0-2.475 0L4.335 8.835a1.75 1.75 0 0 0 0 2.475l.354.354a1.75 1.75 0 0 0 2.475 0l.884-.884a.75.75 0 0 1 1.06 1.06l-.884.884Z"></path>
+        </svg>
+        <span id="copyLinkLabel" style="font-size: 13px; color: var(--muted);">链接</span>
+      </button>
       <a id="repoLink" class="repoLink" href="https://github.com/edwardtoday/fio-tests" target="_blank" rel="noopener" aria-label="GitHub" title="GitHub">
         <svg viewBox="0 0 16 16" aria-hidden="true">
           <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path>
@@ -65,6 +73,7 @@
       </a>
     </div>
   </div>
+  <div id="toast" class="toast"></div>
   <div class="subtitle" id="subtitle">随机读写展示 IOPS 与 MiB/s，顺序读写展示吞吐 (MiB/s)。数据来自仓库中的 fio 测试日志。</div>
 
   <div id="runsControls" class="card" style="display:none; margin: 16px 0; padding: 12px;">
@@ -218,6 +227,10 @@ const I18N = {
     title: 'fio 测试汇总',
     subtitle: '随机读写展示 IOPS 与 MiB/s，顺序读写展示吞吐 (MiB/s)。数据来自仓库中的 fio 测试日志。',
     repo_link_title: '打开 GitHub 仓库',
+    copy_link: '链接',
+    copy_link_title: '复制当前视图链接',
+    copied: '已复制链接',
+    copy_failed: '复制失败，请手动复制地址栏链接',
 
     lang_label: '语言',
     lang_tip: '切换语言仅影响页面展示，不影响数据。',
@@ -318,6 +331,10 @@ const I18N = {
     title: 'fio Results',
     subtitle: 'Random shows IOPS/MiB/s; sequential shows throughput (MiB/s). Data comes from fio logs in this repo.',
     repo_link_title: 'Open GitHub repository',
+    copy_link: 'Link',
+    copy_link_title: 'Copy link to current view',
+    copied: 'Link copied',
+    copy_failed: 'Copy failed, please copy from the address bar',
 
     lang_label: 'Language',
     lang_tip: 'Language affects UI only, not the data.',
@@ -458,6 +475,15 @@ function applyI18n() {
   const subtitle = document.getElementById('subtitle');
   if (subtitle) subtitle.textContent = t('subtitle');
 
+  const copyLinkBtn = document.getElementById('copyLinkBtn');
+  const copyLinkLabel = document.getElementById('copyLinkLabel');
+  if (copyLinkBtn) {
+    const txt = t('copy_link_title');
+    copyLinkBtn.title = txt;
+    copyLinkBtn.setAttribute('aria-label', txt);
+  }
+  if (copyLinkLabel) copyLinkLabel.textContent = t('copy_link');
+
   const repoLink = document.getElementById('repoLink');
   if (repoLink) {
     const txt = t('repo_link_title');
@@ -470,6 +496,153 @@ function applyI18n() {
     if (!k) return;
     el.textContent = t(k);
   });
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = String(msg);
+  el.style.display = 'block';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { el.style.display = 'none'; }, 1600);
+}
+
+let suppressHashSync = false;
+
+function parseHashParams() {
+  const raw = (location.hash || '').replace(/^#/, '').trim();
+  const params = {};
+  if (!raw) return params;
+  raw.split('&').forEach(part => {
+    if (!part) return;
+    const [k, v] = part.split('=');
+    if (!k) return;
+    params[decodeURIComponent(k)] = decodeURIComponent(v || '');
+  });
+  return params;
+}
+
+function setHashParams(params) {
+  const parts = [];
+  Object.entries(params).forEach(([k, v]) => {
+    if (v === null || v === undefined || v === '') return;
+    parts.push(`${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`);
+  });
+  const next = parts.length ? `#${parts.join('&')}` : '';
+  if (next === location.hash) return;
+  history.replaceState(null, '', next);
+}
+
+function optExists(select, value) {
+  if (!select) return false;
+  return Array.from(select.options).some(o => o.value === String(value));
+}
+
+function applyStateFromHash() {
+  const p = parseHashParams();
+  if (!p || Object.keys(p).length === 0) return;
+
+  suppressHashSync = true;
+  try {
+    // language
+    if (p.lang && I18N[p.lang]) {
+      lang = p.lang;
+      localStorage.setItem('fio_ui_lang', lang);
+      const langSelect = document.getElementById('langSelect');
+      if (langSelect) langSelect.value = lang;
+      applyI18n();
+      currentHeaderMode = '';
+    }
+
+    // common controls
+    const layoutSelect = document.getElementById('layoutSelect');
+    const viewSelect = document.getElementById('viewSelect');
+    const opSelect = document.getElementById('opSelect');
+    const metricSelect = document.getElementById('metricSelect');
+    const latestOnly = document.getElementById('latestOnly');
+
+    if (layoutSelect && p.layout && optExists(layoutSelect, p.layout)) {
+      layoutSelect.value = p.layout;
+      layoutMode = p.layout;
+    }
+    if (viewSelect && p.view && optExists(viewSelect, p.view)) viewSelect.value = p.view;
+    if (opSelect && p.op && optExists(opSelect, p.op)) opSelect.value = p.op;
+    if (metricSelect && p.metric && optExists(metricSelect, p.metric)) metricSelect.value = p.metric;
+    if (latestOnly && p.latest) latestOnly.checked = (p.latest === '1' || p.latest === 'true');
+
+    // explorer filters (only if exists)
+    const map = [
+      ['systemSelect', 'system'],
+      ['rwSelect', 'rw'],
+      ['bsSelect', 'bs'],
+      ['qdSelect', 'qd'],
+      ['runtimeSelect', 'runtime_s'],
+      ['directSelect', 'direct'],
+      ['fdatasyncSelect', 'fdatasync'],
+      ['ioengineSelect', 'ioengine'],
+      ['mixSelect', 'rwmixread'],
+      ['sizePolicySelect', 'size_policy']
+    ];
+    map.forEach(([id, key]) => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      if (p[key] == null || p[key] === '') return;
+      if (optExists(sel, p[key])) sel.value = p[key];
+    });
+
+    // case selection (depends on rebuilt case options)
+    const caseSelect = document.getElementById('caseSelect');
+    if (caseSelect && p.case_key && optExists(caseSelect, p.case_key)) {
+      caseSelect.value = p.case_key;
+    }
+
+    // apply layout visibility once
+    if (typeof applyLayoutMode === 'function') applyLayoutMode();
+  } finally {
+    suppressHashSync = false;
+  }
+}
+
+function syncStateToHash() {
+  if (suppressHashSync) return;
+
+  const params = {};
+  params.lang = lang;
+
+  const layoutSelect = document.getElementById('layoutSelect');
+  const viewSelect = document.getElementById('viewSelect');
+  const opSelect = document.getElementById('opSelect');
+  const metricSelect = document.getElementById('metricSelect');
+  const latestOnly = document.getElementById('latestOnly');
+  const caseSelect = document.getElementById('caseSelect');
+
+  if (layoutSelect) params.layout = layoutSelect.value;
+  if (viewSelect) params.view = viewSelect.value;
+  if (opSelect) params.op = opSelect.value;
+  if (metricSelect) params.metric = metricSelect.value;
+  if (latestOnly) params.latest = latestOnly.checked ? '1' : '0';
+
+  // include current case + explorer filters for reproducibility
+  if (caseSelect && caseSelect.value) params.case_key = caseSelect.value;
+  const map = [
+    ['systemSelect', 'system'],
+    ['rwSelect', 'rw'],
+    ['bsSelect', 'bs'],
+    ['qdSelect', 'qd'],
+    ['runtimeSelect', 'runtime_s'],
+    ['directSelect', 'direct'],
+    ['fdatasyncSelect', 'fdatasync'],
+    ['ioengineSelect', 'ioengine'],
+    ['mixSelect', 'rwmixread'],
+    ['sizePolicySelect', 'size_policy']
+  ];
+  map.forEach(([id, key]) => {
+    const sel = document.getElementById(id);
+    if (!sel || !sel.value) return;
+    params[key] = sel.value;
+  });
+
+  setHashParams(params);
 }
 
 async function loadData() {
@@ -585,6 +758,24 @@ if (langSelect) {
   });
 }
 applyI18n();
+
+// copy link
+document.getElementById('copyLinkBtn')?.addEventListener('click', async () => {
+  try {
+    syncStateToHash();
+    const url = location.href;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(url);
+      toast(t('copied'));
+      return;
+    }
+    // fallback
+    window.prompt(t('copy_link_title'), url);
+  } catch (e) {
+    console.error(e);
+    toast(t('copy_failed'));
+  }
+});
 
 function setHeaders(headers) {
   theadRow.innerHTML = headers.map(h => `<th data-key="${h.key}">${h.label}</th>`).join('');
@@ -1522,6 +1713,7 @@ function renderCompare() {
 function renderAll() {
   if (viewMode === 'runs' && (layoutMode === 'matrix' || document.getElementById('viewSelect')?.value === 'compare')) {
     renderCompare();
+    syncStateToHash();
     return;
   }
 
@@ -1557,6 +1749,8 @@ function renderAll() {
       runsHint.textContent = (sig ? `${t('hint_case_key')}=${caseKey} | ${caseLabel(sig)}` : `${t('hint_case_key')}=${caseKey}`) + (sys ? ` | ${t('col_system')}=${sys}` : '') + ` | ${t('hint_runs')}=${sorted.length}`;
     }
   }
+
+  syncStateToHash();
 }
 
 tbody.addEventListener('click', async (e) => {
@@ -1617,6 +1811,8 @@ tbody.addEventListener('click', async (e) => {
 	      currentHeaderMode = '';
 	      ensureRunsHeaders();
 	      runsView = buildRunsView(doc);
+	      applyStateFromHash();
+	      if (runsView && typeof runsView.rebuildScoreboardPresets === 'function') runsView.rebuildScoreboardPresets();
 	      data = [];
 	    } else {
 	      viewMode = 'legacy';
