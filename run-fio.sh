@@ -542,6 +542,7 @@ run_full() {
   fi
 
   # DB-like additions (buffered + fdatasync; and 8K/16K random @QD1/QD4).
+  # Note: full should be a superset of db profile; keep parameters identical for comparability.
   local bs qd
   for bs in 8k 16k; do
     for qd in 1 4; do
@@ -550,6 +551,8 @@ run_full() {
     done
   done
   run_fsync "write" "4k" 1 60 "1G" "dblike-fdatasync-write-4k-qd1"
+  run_fsync "write" "8k" 1 60 "1G" "dblike-fdatasync-write-8k-qd1"
+  run_fsync "write" "16k" 1 60 "1G" "dblike-fdatasync-write-16k-qd1"
 }
 
 run_db() {

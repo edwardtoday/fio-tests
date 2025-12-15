@@ -1,0 +1,137 @@
+{
+  "cases": [
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "aee07b58f10c79d510da",
+      "fio_json_path": null,
+      "ioengine_raw": "posixaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 0.005503654479980469,
+          "clat_p95_ms": 16308.0,
+          "clat_p99_ms": 17113.0,
+          "iops": 1.0
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randread",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "a9ee22014b373ef09b11",
+      "fio_json_path": null,
+      "ioengine_raw": "posixaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 5.7109375,
+          "clat_p95_ms": 3.0,
+          "clat_p99_ms": 4.0,
+          "iops": 1461.0
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "1M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "read",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "a34a913bed6fabafe3b1",
+      "fio_json_path": null,
+      "ioengine_raw": "posixaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 78.1,
+          "clat_p95_ms": 241.0,
+          "clat_p99_ms": 439.0,
+          "iops": 78.0
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "1M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "write",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "4dcb4b1ee819606a3134",
+      "fio_json_path": null,
+      "ioengine_raw": "posixaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 10.5,
+          "clat_p95_ms": 2702.0,
+          "clat_p99_ms": 3842.0,
+          "iops": 10.0
+        }
+      },
+      "size_effective_bytes": 1073741824
+    }
+  ],
+  "mode": "legacy_import",
+  "repo": "edwardtoday/fio-tests",
+  "run": {
+    "engine": "posixaio",
+    "invoked_profile": "legacy_md",
+    "out_dir": null,
+    "run_id": "20251212T234014Z_ae80b01b268d395ae680_legacy_86f0a5c9",
+    "system": "Toshiba-Exceria-32G",
+    "system_hash": "ae80b01b268d395ae680",
+    "target_dir": null,
+    "timestamp": "2025-12-12T23:40:14Z",
+    "timestamp_compact": "20251212T234014Z"
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "cases": [
+    {
+      "case": {
+        "bs": "1M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "read",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "a34a913bed6fabafe3b1",
+      "fio_json_path": null,
+      "ioengine_raw": "posixaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 285.0,
+          "clat_p95_ms": 63.701,
+          "clat_p99_ms": 66.84700000000001,
+          "iops": 285.0
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "1M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "write",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "4dcb4b1ee819606a3134",
+      "fio_json_path": null,
+      "ioengine_raw": "posixaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 478.0,
+          "clat_p95_ms": 102.0,
+          "clat_p99_ms": 368.0,
+          "iops": 477.0
+        }
+      },
+      "size_effective_bytes": 1073741824
+    }
+  ],
+  "mode": "legacy_import",
+  "repo": "edwardtoday/fio-tests",
+  "run": {
+    "engine": "posixaio",
+    "invoked_profile": "legacy_md",
+    "out_dir": null,
+    "run_id": "20251212T142655Z_fe5104c29b20b63635ab_legacy_4d7cb087",
+    "system": "Samsung-T7-1TB",
+    "system_hash": "fe5104c29b20b63635ab",
+    "target_dir": null,
+    "timestamp": "2025-12-12T14:26:55Z",
+    "timestamp_compact": "20251212T142655Z"
+  }
+}

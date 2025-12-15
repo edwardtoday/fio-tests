@@ -1,0 +1,77 @@
+{
+  "cases": [
+    {
+      "case": {
+        "bs": "1M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "read",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "a34a913bed6fabafe3b1",
+      "fio_json_path": null,
+      "ioengine_raw": "posixaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 49.3,
+          "clat_p95_ms": 359.0,
+          "clat_p99_ms": 380.0,
+          "iops": 49.0
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "1M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "write",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "4dcb4b1ee819606a3134",
+      "fio_json_path": null,
+      "ioengine_raw": "posixaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 68.6,
+          "clat_p95_ms": 264.0,
+          "clat_p99_ms": 279.0,
+          "iops": 68.0
+        }
+      },
+      "size_effective_bytes": 1073741824
+    }
+  ],
+  "mode": "legacy_import",
+  "repo": "edwardtoday/fio-tests",
+  "run": {
+    "engine": "posixaio",
+    "invoked_profile": "legacy_md",
+    "out_dir": null,
+    "run_id": "20251212T143924Z_879cc803f6c13ed58647_legacy_e21892ed",
+    "system": "Sandisk-High-Endurance-64G",
+    "system_hash": "879cc803f6c13ed58647",
+    "target_dir": null,
+    "timestamp": "2025-12-12T14:39:24Z",
+    "timestamp_compact": "20251212T143924Z"
+  }
+}

@@ -58,7 +58,7 @@ Profile：
 - 持续顺序写：1M `write` QD64（非 time_based），写入 `16GiB` 或 `可用空间 60%`（以实际耗时为准）
 - 持续随机写：4K `randwrite` QD4 `rt=600s` `direct=1` `native_aio`（10min）
 - DB-like 随机：8K/16K `randread/randwrite` @QD1/@QD4（共 8 项）`rt=120s` `direct=1` `native_aio`
-- DB-like 落盘：4K `write` QD1 `rt=60s` `direct=0` `ioengine=sync` `fdatasync=1`
+- DB-like 落盘：4K/8K/16K `write` QD1 `rt=60s` `direct=0` `ioengine=sync` `fdatasync=1`
 
 **db**（约 `12×120s + 3×60s ≈ 27 分钟`）
 

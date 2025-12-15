@@ -1,0 +1,77 @@
+{
+  "cases": [
+    {
+      "case": {
+        "bs": "1M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "read",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "a34a913bed6fabafe3b1",
+      "fio_json_path": null,
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 126.0,
+          "clat_p95_ms": 542.0,
+          "clat_p99_ms": 558.0,
+          "iops": 126.0
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "1M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "write",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "4dcb4b1ee819606a3134",
+      "fio_json_path": null,
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 125.0,
+          "clat_p95_ms": 550.0,
+          "clat_p99_ms": 558.0,
+          "iops": 125.0
+        }
+      },
+      "size_effective_bytes": 1073741824
+    }
+  ],
+  "mode": "legacy_import",
+  "repo": "edwardtoday/fio-tests",
+  "run": {
+    "engine": "libaio",
+    "invoked_profile": "legacy_md",
+    "out_dir": null,
+    "run_id": "20251212T075904Z_775572b09bed8ba30eb5_legacy_0e6745f4",
+    "system": "g5.xlarge-cn-north-1",
+    "system_hash": "775572b09bed8ba30eb5",
+    "target_dir": null,
+    "timestamp": "2025-12-12T07:59:04Z",
+    "timestamp_compact": "20251212T075904Z"
+  }
+}

@@ -273,6 +273,7 @@ function renderTable(sorted) {
       tr.innerHTML = `
         <td><a href="#" data-runid="${d.run_id}">${d.system}</a></td>
         <td><a href="results/runs/${d.run_id}.json" target="_blank" rel="noopener">${d.timestamp}</a></td>
+        <td>${d.op || ''}</td>
         <td>${fmt(d.iops,0)}</td>
         <td>${fmt(d.bw_mib_s,2)}</td>
         <td>${fmtLatencyMs(d.clat_p95_ms)}</td>
@@ -362,11 +363,12 @@ function ensureChart(chartType, datasetCount, datasetLabels) {
 function renderChart(sorted) {
   if (viewMode === 'legacy') {
     // legacy: 设备为行（bar 横向）
-    const perDevice = BW_BAR_THICKNESS * BW_DATASET_COUNT + 18;
-    const height = 180 + sorted.length * perDevice;
+    const datasetCount = 4;
+    const perDevice = BW_BAR_THICKNESS * datasetCount + 28;
+    const height = 200 + sorted.length * perDevice;
     bwCanvas.style.height = `${height}px`;
 
-    ensureChart('bar', 4, ['随机读 MiB/s', '随机写 MiB/s', '顺序读 MiB/s', '顺序写 MiB/s']);
+    ensureChart('bar', datasetCount, ['随机读 MiB/s', '随机写 MiB/s', '顺序读 MiB/s', '顺序写 MiB/s']);
     bwChart.data.labels = sorted.map(d => d.device);
     bwChart.data.datasets[0].data = sorted.map(d => d.rand_read_bw_mib);
     bwChart.data.datasets[1].data = sorted.map(d => d.rand_write_bw_mib);
@@ -375,18 +377,20 @@ function renderChart(sorted) {
   } else {
     const metric = document.getElementById('metricSelect').value;
     const view = document.getElementById('viewSelect').value;
+    const opMode = document.getElementById('opSelect')?.value || 'read';
     if (view === 'history') {
+      const historyRows = (opMode === 'auto') ? sorted.filter(r => r.op === 'read') : sorted;
       // history: 同一 system 多次 run 按时间串起来（line）
-      const height = 260 + Math.min(30, sorted.length) * 10;
+      const height = 260 + Math.min(30, historyRows.length) * 10;
       bwCanvas.style.height = `${height}px`;
 
       const bySystem = new Map();
-      sorted.forEach(r => {
+      historyRows.forEach(r => {
         if (!bySystem.has(r.system)) bySystem.set(r.system, []);
         bySystem.get(r.system).push(r);
       });
       const systems = Array.from(bySystem.keys()).sort((a,b) => a.localeCompare(b, 'zh-Hans'));
-      const labels = Array.from(new Set(sorted.map(r => r.timestamp))).sort();
+      const labels = Array.from(new Set(historyRows.map(r => r.timestamp))).sort();
 
       ensureChart('line', systems.length, systems.map(s => s));
       bwChart.data.labels = labels;
@@ -409,14 +413,26 @@ function renderChart(sorted) {
       bwChart.options.scales.y = { beginAtZero: false };
     } else {
       // by_system: 默认以 system 为行（bar 横向）
-      const perDevice = BW_BAR_THICKNESS * BW_DATASET_COUNT + 18;
-      const height = 180 + sorted.length * perDevice;
+      const datasetCount = (opMode === 'auto') ? 2 : 1;
+      const rowCount = (opMode === 'auto') ? uniqSorted(sorted.map(d => d.system)).length : sorted.length;
+      const perDevice = BW_BAR_THICKNESS * datasetCount + 28;
+      const height = 200 + rowCount * perDevice;
       bwCanvas.style.height = `${height}px`;
 
-      const label = `metric: ${metric}`;
-      ensureChart('bar', 1, [label]);
-      bwChart.data.labels = sorted.map(d => d.system);
-      bwChart.data.datasets[0].data = sorted.map(d => d[metric]);
+      if (opMode === 'auto') {
+        const systems = uniqSorted(sorted.map(d => d.system));
+        ensureChart('bar', datasetCount, [`read ${metric}`, `write ${metric}`]);
+        bwChart.data.labels = systems;
+        const readMap = new Map(sorted.filter(r => r.op === 'read').map(r => [r.system, r[metric]]));
+        const writeMap = new Map(sorted.filter(r => r.op === 'write').map(r => [r.system, r[metric]]));
+        bwChart.data.datasets[0].data = systems.map(s => readMap.get(s) ?? null);
+        bwChart.data.datasets[1].data = systems.map(s => writeMap.get(s) ?? null);
+      } else {
+        const label = `metric: ${metric}`;
+        ensureChart('bar', datasetCount, [label]);
+        bwChart.data.labels = sorted.map(d => d.system);
+        bwChart.data.datasets[0].data = sorted.map(d => d[metric]);
+      }
       bwChart.options.plugins.datalabels.display = true;
       bwChart.options.scales.x = { beginAtZero: true };
       bwChart.options.scales.y = { ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 } };
@@ -612,6 +628,7 @@ function buildRunsView(doc) {
     if (!sig) return;
 
     const availableOps = Array.from(caseOps.get(currentCaseKey) || []);
+    if (opSelect.value === 'auto') return;
     if (availableOps.length === 1) {
       opSelect.value = availableOps[0];
       return;
@@ -652,7 +669,7 @@ function buildRunsView(doc) {
         matchesFilter(sig, 'ioengine', engine) &&
         matchesFilter(sig, 'rwmixread', mix) &&
         (sp ? String(sig.size_policy?.mode || '') === String(sp) : true) &&
-        (selectedOp ? (caseOps.get(caseKey)?.has(selectedOp) || false) : true)
+        (selectedOp ? (selectedOp === 'auto' ? true : (caseOps.get(caseKey)?.has(selectedOp) || false)) : true)
       )
       .map(([ck, sig]) => ({ case_key: ck, label: caseLabel(sig) }))
       .sort((a,b) => a.label.localeCompare(b.label));
@@ -731,13 +748,17 @@ function buildRunsRows() {
 
   if (!caseKey) return [];
 
+  const selectedOp = op;
+  const opsWanted = (selectedOp === 'auto') ? ['read', 'write'] : [selectedOp];
+
   const rows = runsView.measurements
-    .filter(m => m.case_key === caseKey && m.op === op)
+    .filter(m => m.case_key === caseKey && opsWanted.includes(m.op))
     .filter(m => !systemFilter || m.system === systemFilter)
     .map(m => ({
       system: m.system,
       timestamp: m.timestamp,
       run_id: m.run_id,
+      op: m.op,
       iops: m.iops,
       bw_mib_s: m.bw_mib_s,
       clat_p95_ms: m.clat_p95_ms,
@@ -748,11 +769,13 @@ function buildRunsRows() {
   if (view === 'history') return rows;
   if (!latestOnly) return rows;
 
+  // auto: latest per system+op
   const best = new Map();
   rows.forEach(r => {
-    const prev = best.get(r.system);
+    const key = `${r.system}|${r.op}`;
+    const prev = best.get(key);
     if (!prev || (r.timestamp > prev.timestamp) || (r.timestamp === prev.timestamp && r.run_id > prev.run_id)) {
-      best.set(r.system, r);
+      best.set(key, r);
     }
   });
   return Array.from(best.values());
@@ -979,6 +1002,7 @@ tbody.addEventListener('click', async (e) => {
       setHeaders([
         { key: 'system', label: 'system' },
         { key: 'timestamp', label: 'timestamp' },
+        { key: 'op', label: 'op' },
         { key: 'iops', label: 'iops' },
         { key: 'bw_mib_s', label: 'bw_mib_s' },
         { key: 'clat_p95_ms', label: 'clat_p95_ms' },
