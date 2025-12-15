@@ -929,6 +929,14 @@ function fmtLatencyMs(ms) {
   return `${v.toFixed(2)}ms`;
 }
 
+function median(values) {
+  const nums = values.filter(v => typeof v === 'number' && Number.isFinite(v)).slice().sort((a, b) => a - b);
+  if (nums.length === 0) return null;
+  const mid = Math.floor(nums.length / 2);
+  if (nums.length % 2 === 1) return nums[mid];
+  return (nums[mid - 1] + nums[mid]) / 2;
+}
+
 function escHtml(s) {
   return String(s)
     .replace(/&/g, '&amp;')
@@ -1030,7 +1038,31 @@ function ensureSystemHistoryChart() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false }, datalabels: { display: false } },
+      plugins: {
+        legend: { display: false },
+        datalabels: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => {
+              const i = items?.[0];
+              if (!i) return '';
+              const ds = i.dataset || {};
+              const meta = ds._fio_points?.[i.dataIndex];
+              return meta?.timestamp || i.label || '';
+            },
+            label: (ctx) => {
+              const ds = ctx.dataset || {};
+              const metric = ds._fio_metricKey || 'bw_mib_s';
+              const meta = ds._fio_points?.[ctx.dataIndex] || {};
+              const v = ctx.parsed?.y;
+              const fmtv = String(metric).startsWith('clat_') ? fmtLatencyMs(v) : (metric === 'iops' ? fmt(v, 0) : fmt(v, 2));
+              const lines = [`${metricLabel(metric)}: ${fmtv}`];
+              if (meta.run_id) lines.push(`${t('run_id')}: ${meta.run_id}`);
+              return lines;
+            }
+          }
+        }
+      },
       scales: {
         x: { ticks: { maxRotation: 0, minRotation: 0, autoSkip: true, maxTicksLimit: 10 } },
         y: { beginAtZero: false }
@@ -1053,14 +1085,32 @@ function renderSystemHistory() {
     .sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp)));
   const sliced = list.slice(Math.max(0, list.length - n));
   const labels = sliced.map(m => String(m.timestamp || '').replace('T', ' ').replace('Z', ''));
-  const values = sliced.map(m => m[metric] ?? null);
+  const values = sliced.map(m => (typeof m[metric] === 'number' ? m[metric] : null));
+  const med = median(values);
+  const relThreshold = 0.30; // 简单规则：偏离中位数超过 30% 视为异常点（后续可做成可配置）
+  const absThresholdMs = 20; // latency 中位数极小/为 0 时的兜底阈值（ms）
+  const isLatency = String(metric).startsWith('clat_');
+  const anomalies = values.map(v => {
+    if (v === null || v === undefined || !Number.isFinite(v) || med === null) return false;
+    const diff = Math.abs(v - med);
+    if (med === 0) return diff >= (isLatency ? absThresholdMs : 0);
+    const rel = diff / Math.abs(med);
+    if (isLatency && Math.abs(med) < 1e-6) return diff >= absThresholdMs;
+    return rel >= relThreshold;
+  });
 
   const chart = ensureSystemHistoryChart();
   if (!chart) return;
   chart.data.labels = labels;
-  chart.data.datasets[0].label = `${metricLabel(metric)}`;
-  chart.data.datasets[0].data = values;
-  chart.options.scales.y.beginAtZero = !(String(metric).startsWith('clat_'));
+  const ds = chart.data.datasets[0];
+  ds.label = `${metricLabel(metric)}`;
+  ds.data = values;
+  ds.pointRadius = anomalies.map(a => a ? 5 : 2);
+  ds.pointBackgroundColor = anomalies.map(a => a ? '#e11d48' : '#0ea5e9');
+  ds.pointBorderColor = anomalies.map(a => a ? '#e11d48' : '#0ea5e9');
+  ds._fio_metricKey = metric;
+  ds._fio_points = sliced.map(m => ({ run_id: m.run_id, timestamp: m.timestamp }));
+  chart.options.scales.y.beginAtZero = !isLatency;
   chart.update();
 }
 systemHistoryCase?.addEventListener('change', () => { renderSystemHistory(); syncStateToHash(); });
