@@ -835,6 +835,9 @@ function buildRunsView(doc) {
       // Ensure op/metric matches the preset intent
       opSelect.value = op;
       document.getElementById('metricSelect').value = metric;
+      // Scoreboard: sort should follow metric (and latency smaller is better)
+      sortKey = metric;
+      sortDir = metric.startsWith('clat_') ? 'asc' : 'desc';
 
       // Force scoreboard defaults
       viewSelect.value = 'by_system';
