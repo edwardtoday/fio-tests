@@ -203,6 +203,7 @@ function ensureRunsHeaders() {
   setHeaders([
     { key: 'system', label: 'system' },
     { key: 'timestamp', label: 'timestamp' },
+    { key: 'op', label: 'op' },
     { key: 'iops', label: 'iops' },
     { key: 'bw_mib_s', label: 'bw_mib_s' },
     { key: 'clat_p95_ms', label: 'clat_p95_ms' },
@@ -414,13 +415,13 @@ function renderChart(sorted) {
     } else {
       // by_system: 默认以 system 为行（bar 横向）
       const datasetCount = (opMode === 'auto') ? 2 : 1;
-      const rowCount = (opMode === 'auto') ? uniqSorted(sorted.map(d => d.system)).length : sorted.length;
+      const rowCount = (opMode === 'auto') ? uniqInOrder(sorted.map(d => d.system)).length : sorted.length;
       const perDevice = BW_BAR_THICKNESS * datasetCount + 28;
       const height = 200 + rowCount * perDevice;
       bwCanvas.style.height = `${height}px`;
 
       if (opMode === 'auto') {
-        const systems = uniqSorted(sorted.map(d => d.system));
+        const systems = uniqInOrder(sorted.map(d => d.system));
         ensureChart('bar', datasetCount, [`read ${metric}`, `write ${metric}`]);
         bwChart.data.labels = systems;
         const readMap = new Map(sorted.filter(r => r.op === 'read').map(r => [r.system, r[metric]]));
@@ -443,6 +444,19 @@ function renderChart(sorted) {
 
 function uniqSorted(values) {
   return Array.from(new Set(values.filter(v => v !== null && v !== undefined && v !== ''))).sort((a,b) => String(a).localeCompare(String(b)));
+}
+
+function uniqInOrder(values) {
+  const out = [];
+  const seen = new Set();
+  values.forEach(v => {
+    if (v === null || v === undefined || v === '') return;
+    const key = String(v);
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push(v);
+  });
+  return out;
 }
 
 function setSelectOptions(select, values, allLabel='(any)') {
