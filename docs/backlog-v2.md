@@ -41,9 +41,9 @@
 
 ### M1.3 两次 run 对比（diff）
 
-- [ ] M1.3.1 选择两个 run（同 system）进行 diff
+- [x] M1.3.1 选择两个 run（同 system）进行 diff
   - 验收：能看到哪些 case 变快/变慢（百分比），并能按变动幅度排序
-- [ ] M1.3.2 diff 支持按 metric 切换（iops/bw/p95/p99）
+- [x] M1.3.2 diff 支持按 metric 切换（iops/bw/p95/p99）
   - 验收：切 metric 后 diff 表格与图表同步更新
 
 ---

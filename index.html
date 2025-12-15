@@ -231,8 +231,8 @@
 			      <div id="systemDetailsTitle" style="font-weight: 600;"></div>
 			      <button id="systemDetailsClose" type="button" data-i18n="close">关闭</button>
 			    </div>
-			    <div id="systemDetailsMeta" class="muted"></div>
-			    </div>
+		    <div id="systemDetailsMeta" class="muted"></div>
+		    </div>
 			    <div style="margin-top: 10px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
 			      <span style="font-weight: 600; color: var(--text);" data-i18n="history_title">历史趋势</span>
 			      <label style="display:flex; gap:6px; align-items:center;">
@@ -260,6 +260,41 @@
 			    </div>
 			    <div style="margin-top: 10px;">
 			      <canvas id="systemHistoryCanvas" style="height: 220px;"></canvas>
+			    </div>
+			    <div style="margin-top: 14px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+			      <span style="font-weight: 600; color: var(--text);" data-i18n="diff_title">对比两次运行</span>
+			      <label style="display:flex; gap:6px; align-items:center;">
+			        <span data-i18n="diff_run_a">基准</span>
+			        <select id="systemDiffRunA" style="min-width: 360px;"></select>
+			      </label>
+			      <label style="display:flex; gap:6px; align-items:center;">
+			        <span data-i18n="diff_run_b">对比</span>
+			        <select id="systemDiffRunB" style="min-width: 360px;"></select>
+			      </label>
+			      <label style="display:flex; gap:6px; align-items:center;">
+			        <span data-i18n="metric">指标</span>
+			        <select id="systemDiffMetric">
+			          <option value="bw_mib_s" selected data-i18n="metric_bw">吞吐 MiB/s</option>
+			          <option value="iops" data-i18n="metric_iops">IOPS</option>
+			          <option value="clat_p95_ms" data-i18n="metric_clat_p95">延迟 p95 (ms)</option>
+			          <option value="clat_p99_ms" data-i18n="metric_clat_p99">延迟 p99 (ms)</option>
+			        </select>
+			      </label>
+			    </div>
+			    <div style="margin-top: 10px; overflow:auto;">
+			      <table id="systemDiffTable" style="margin: 0;">
+			        <thead>
+			          <tr>
+			            <th data-key="case" data-i18n="case">用例</th>
+			            <th data-key="op" data-i18n="op">读写</th>
+			            <th data-key="a" data-i18n="diff_a">A</th>
+			            <th data-key="b" data-i18n="diff_b">B</th>
+			            <th data-key="delta" data-i18n="diff_delta">Δ</th>
+			            <th data-key="pct" data-i18n="diff_pct">Δ%</th>
+			          </tr>
+			        </thead>
+			        <tbody></tbody>
+			      </table>
 			    </div>
 			    <table id="systemDetailsTable" style="margin: 0;">
 		      <thead>
@@ -394,6 +429,13 @@ const I18N = {
     history_title: '历史趋势',
     history_case: '用例',
     history_last_n: '最近N次',
+    diff_title: '对比两次运行',
+    diff_run_a: '基准',
+    diff_run_b: '对比',
+    diff_a: 'A',
+    diff_b: 'B',
+    diff_delta: '差值',
+    diff_pct: '变化率',
     engine: '引擎',
     profile: 'profile',
     target_dir: 'target_dir',
@@ -506,6 +548,13 @@ const I18N = {
     history_title: 'History',
     history_case: 'Case',
     history_last_n: 'Last N',
+    diff_title: 'Run diff',
+    diff_run_a: 'A',
+    diff_run_b: 'B',
+    diff_a: 'A',
+    diff_b: 'B',
+    diff_delta: 'Δ',
+    diff_pct: 'Δ%',
     engine: 'engine',
     profile: 'profile',
     target_dir: 'target_dir',
@@ -588,6 +637,33 @@ function openSystemDetails(system) {
 
   systemDetailsTitle.textContent = `${t('system_details')}: ${sys}`;
   systemDetailsMeta.textContent = `${t('compare_cases_label')}=${rows.length}`;
+  // diff options (runs)
+  if (systemDiffRunA && systemDiffRunB) {
+    const runs = (runsDoc.runs || [])
+      .filter(r => r && r.system === sys)
+      .slice()
+      .sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp)));
+    const opts = runs.map(r => ({ value: r.run_id, label: `${String(r.timestamp || '').replace('T', ' ').replace('Z', '')} | ${r.run_id}` }));
+    systemDiffRunA.innerHTML = '';
+    systemDiffRunB.innerHTML = '';
+    opts.forEach(o => {
+      const a = document.createElement('option');
+      a.value = o.value;
+      a.textContent = o.label;
+      systemDiffRunA.appendChild(a);
+      const b = document.createElement('option');
+      b.value = o.value;
+      b.textContent = o.label;
+      systemDiffRunB.appendChild(b);
+    });
+    if (opts.length >= 2) {
+      if (!systemDiffRunA.value) systemDiffRunA.value = opts[opts.length - 2].value;
+      if (!systemDiffRunB.value) systemDiffRunB.value = opts[opts.length - 1].value;
+    } else if (opts.length === 1) {
+      systemDiffRunA.value = opts[0].value;
+      systemDiffRunB.value = opts[0].value;
+    }
+  }
   // history options
   if (systemHistoryCase) {
     const options = [];
@@ -645,6 +721,7 @@ function openSystemDetails(system) {
   setDrawerOpen(true);
   systemDetails.focus?.();
   renderSystemHistory();
+  renderSystemDiff();
   syncStateToHash();
 }
 
@@ -853,7 +930,20 @@ function applyStateFromHash() {
       const sel = document.getElementById('systemHistoryN');
       if (sel && optExists(sel, p.detail_n)) sel.value = p.detail_n;
     }
+    if (p.detail_run_a) {
+      const sel = document.getElementById('systemDiffRunA');
+      if (sel && optExists(sel, p.detail_run_a)) sel.value = p.detail_run_a;
+    }
+    if (p.detail_run_b) {
+      const sel = document.getElementById('systemDiffRunB');
+      if (sel && optExists(sel, p.detail_run_b)) sel.value = p.detail_run_b;
+    }
+    if (p.detail_diff_metric) {
+      const sel = document.getElementById('systemDiffMetric');
+      if (sel && optExists(sel, p.detail_diff_metric)) sel.value = p.detail_diff_metric;
+    }
     renderSystemHistory();
+    renderSystemDiff();
   } finally {
     suppressHashSync = false;
   }
@@ -903,6 +993,9 @@ function syncStateToHash() {
     if (systemHistoryCase?.value) params.detail_case_op = systemHistoryCase.value;
     if (systemHistoryMetric?.value) params.detail_metric = systemHistoryMetric.value;
     if (systemHistoryN?.value) params.detail_n = systemHistoryN.value;
+    if (systemDiffRunA?.value) params.detail_run_a = systemDiffRunA.value;
+    if (systemDiffRunB?.value) params.detail_run_b = systemDiffRunB.value;
+    if (systemDiffMetric?.value) params.detail_diff_metric = systemDiffMetric.value;
   }
 
   setHashParams(params);
@@ -1022,6 +1115,12 @@ const systemHistoryMetric = document.getElementById('systemHistoryMetric');
 const systemHistoryN = document.getElementById('systemHistoryN');
 const systemHistoryCanvas = document.getElementById('systemHistoryCanvas');
 let systemHistoryChart = null;
+const systemDiffRunA = document.getElementById('systemDiffRunA');
+const systemDiffRunB = document.getElementById('systemDiffRunB');
+const systemDiffMetric = document.getElementById('systemDiffMetric');
+const systemDiffTbody = document.querySelector('#systemDiffTable tbody');
+let systemDiffSortKey = 'pct';
+let systemDiffSortDir = 'desc';
 document.getElementById('systemDetailsClose').addEventListener('click', closeDrawers);
 systemDetailsTbody.addEventListener('click', async (e) => {
   const aRun = e.target.closest('a[data-runid]');
@@ -1116,6 +1215,111 @@ function renderSystemHistory() {
 systemHistoryCase?.addEventListener('change', () => { renderSystemHistory(); syncStateToHash(); });
 systemHistoryMetric?.addEventListener('change', () => { renderSystemHistory(); syncStateToHash(); });
 systemHistoryN?.addEventListener('change', () => { renderSystemHistory(); syncStateToHash(); });
+
+function renderSystemDiff() {
+  if (viewMode !== 'runs' || !runsDoc || !runsView) return;
+  if (!systemDetailsSystem) return;
+  if (!systemDiffTbody) return;
+
+  const runA = systemDiffRunA?.value || '';
+  const runB = systemDiffRunB?.value || '';
+  const metric = systemDiffMetric?.value || 'bw_mib_s';
+  if (!runA || !runB) {
+    systemDiffTbody.innerHTML = '';
+    return;
+  }
+
+  const preferLower = metricPrefersLower(metric);
+  const fmtMetric = (v) => {
+    if (v === null || v === undefined || !Number.isFinite(Number(v))) return '-';
+    const n = Number(v);
+    if (String(metric).startsWith('clat_')) return fmtLatencyMs(n);
+    if (metric === 'iops') return fmt(n, 0);
+    return fmt(n, 2);
+  };
+
+  const mapA = new Map();
+  const mapB = new Map();
+  (runsDoc.measurements || []).forEach(m => {
+    if (!m || m.system !== systemDetailsSystem) return;
+    const key = `${m.case_key}|${m.op}`;
+    if (m.run_id === runA) mapA.set(key, m);
+    if (m.run_id === runB) mapB.set(key, m);
+  });
+
+  const keys = new Set([...mapA.keys(), ...mapB.keys()]);
+  const rows = [];
+  keys.forEach(k => {
+    const a = mapA.get(k);
+    const b = mapB.get(k);
+    const [caseKey, op] = k.split('|');
+    const sig = runsView.caseDefs[caseKey] || {};
+    const label = caseLabel(sig);
+    const va = a ? a[metric] : null;
+    const vb = b ? b[metric] : null;
+    const na = (typeof va === 'number' && Number.isFinite(va)) ? va : null;
+    const nb = (typeof vb === 'number' && Number.isFinite(vb)) ? vb : null;
+    const delta = (na !== null && nb !== null) ? (nb - na) : null;
+    const pct = (na !== null && nb !== null && na !== 0) ? ((nb / na) - 1) : null;
+    const improved = (delta !== null) ? (preferLower ? (delta < 0) : (delta > 0)) : null;
+    rows.push({ key: k, case_label: label, op, va: na, vb: nb, delta, pct, improved });
+  });
+
+  rows.sort((r1, r2) => {
+    const a = r1[systemDiffSortKey];
+    const b = r2[systemDiffSortKey];
+    const na = (a === null || a === undefined);
+    const nb = (b === null || b === undefined);
+    if (na && nb) return 0;
+    if (na) return 1;
+    if (nb) return -1;
+    if (typeof a === 'number' && typeof b === 'number') return systemDiffSortDir === 'asc' ? a - b : b - a;
+    const cmp = String(a).localeCompare(String(b), 'zh-Hans');
+    return systemDiffSortDir === 'asc' ? cmp : -cmp;
+  });
+
+  systemDiffTbody.innerHTML = '';
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    const cls = r.improved === null ? '' : (r.improved ? ' style="background: rgba(16,185,129,0.08);"' : ' style="background: rgba(225,29,72,0.08);"');
+    const pctTxt = (r.pct === null || r.pct === undefined) ? '-' : `${(r.pct * 100).toFixed(1)}%`;
+    const deltaTxt = (r.delta === null || r.delta === undefined) ? '-' : (String(metric).startsWith('clat_') ? fmtLatencyMs(r.delta) : (metric === 'iops' ? fmt(r.delta, 0) : fmt(r.delta, 2)));
+    tr.innerHTML = `
+      <td style="text-align:left;">${escHtml(r.case_label)}</td>
+      <td>${escHtml(opLabel(r.op))}</td>
+      <td>${escHtml(fmtMetric(r.va))}</td>
+      <td>${escHtml(fmtMetric(r.vb))}</td>
+      <td${cls}>${escHtml(deltaTxt)}</td>
+      <td${cls}>${escHtml(pctTxt)}</td>`;
+    systemDiffTbody.appendChild(tr);
+  });
+
+  // header sort
+  const ths = Array.from(document.querySelectorAll('#systemDiffTable thead th[data-key]'));
+  ths.forEach(th => {
+    const base = th.dataset.label || th.textContent.replace(/ [↑↓]$/, '');
+    th.dataset.label = base;
+    const key = th.dataset.key;
+    let mapped = key;
+    if (key === 'case') mapped = 'case_label';
+    if (key === 'op') mapped = 'op';
+    if (key === 'a') mapped = 'va';
+    if (key === 'b') mapped = 'vb';
+    if (key === 'delta') mapped = 'delta';
+    if (key === 'pct') mapped = 'pct';
+    if (mapped === systemDiffSortKey) th.textContent = `${base} ${systemDiffSortDir === 'asc' ? '↑' : '↓'}`;
+    else th.textContent = base;
+    th.onclick = () => {
+      if (systemDiffSortKey === mapped) systemDiffSortDir = systemDiffSortDir === 'asc' ? 'desc' : 'asc';
+      else { systemDiffSortKey = mapped; systemDiffSortDir = (mapped === 'case_label' || mapped === 'op') ? 'asc' : 'desc'; }
+      renderSystemDiff();
+    };
+  });
+}
+
+systemDiffRunA?.addEventListener('change', () => { renderSystemDiff(); syncStateToHash(); });
+systemDiffRunB?.addEventListener('change', () => { renderSystemDiff(); syncStateToHash(); });
+systemDiffMetric?.addEventListener('change', () => { renderSystemDiff(); syncStateToHash(); });
 
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
