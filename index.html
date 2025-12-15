@@ -1101,6 +1101,16 @@ function renderAll() {
   if (viewMode === 'runs') ensureRunsHeaders();
   if (viewMode === 'legacy') ensureLegacyHeaders();
 
+  // Scoreboard 语义：表格与图表都围绕当前 metric 展示与排序，避免“metric=clat 但仍按 bw 排序”的混乱。
+  if (viewMode === 'runs' && layoutMode === 'scoreboard') {
+    const metric = document.getElementById('metricSelect')?.value || 'bw_mib_s';
+    const numericKeys = new Set(['iops', 'bw_mib_s', 'clat_p95_ms', 'clat_p99_ms']);
+    if (numericKeys.has(metric)) {
+      sortKey = metric;
+      sortDir = metric.startsWith('clat_') ? 'asc' : 'desc';
+    }
+  }
+
   const rows = (viewMode === 'legacy') ? data : buildRunsRows();
   const sorted = sortData(rows);
   renderTable(sorted);
