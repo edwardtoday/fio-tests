@@ -70,24 +70,31 @@ jobs:
           echo "bucket=${bucket}"
           echo "key=${key}"
           echo "access_key_id_prefix=${AWS_ACCESS_KEY_ID:0:6}"
-          aws configure list
-          # Linode Object Storage public URLs are commonly path-style; force awscli to use path-style too.
-          aws configure set default.s3.addressing_style path
-          # Some S3-compatible endpoints reject AWS SigV4 streaming/chunked uploads (HTTP 411 Length Required).
-          # Disable S3 payload signing to avoid streaming uploads for small files.
-          aws configure set default.s3.payload_signing_enabled false
+
+          # Note: Linode Object Storage (RGW) may reject AWS CLI's chunked/streaming uploads with HTTP 411.
+          # Use s3cmd which sends Content-Length.
+          sudo apt-get update -y
+          sudo apt-get install -y s3cmd
+
+          cat > /tmp/s3cmd.cfg <<EOF
+[default]
+access_key = ${AWS_ACCESS_KEY_ID}
+secret_key = ${AWS_SECRET_ACCESS_KEY}
+host_base = us-east-1.linodeobjects.com
+host_bucket = us-east-1.linodeobjects.com
+bucket_location = us-east-1
+use_https = True
+signature_v2 = False
+EOF
 
           echo "checking bucket access..."
-          aws s3api head-bucket --bucket "${bucket}" --endpoint-url "${endpoint}"
+          s3cmd --config /tmp/s3cmd.cfg ls "s3://${bucket}/" >/dev/null
           echo "listing bucket prefix..."
-          aws s3 ls "s3://${bucket}/2025/" --endpoint-url "${endpoint}" || true
+          s3cmd --config /tmp/s3cmd.cfg ls "s3://${bucket}/2025/" || true
 
           echo "uploading..."
-          aws s3api put-object \
-            --endpoint-url "${endpoint}" \
-            --bucket "${bucket}" \
-            --key "${key}" \
-            --body ./run-fio.sh \
-            --content-type text/x-shellscript \
-            --cache-control "max-age=60"
+          s3cmd --config /tmp/s3cmd.cfg put \
+            --mime-type text/x-shellscript \
+            --add-header "Cache-Control:max-age=60" \
+            ./run-fio.sh "s3://${bucket}/${key}"
           echo "done"
