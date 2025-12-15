@@ -1,0 +1,871 @@
+{
+  "cases": [
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 120,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "3b38608221fcda5bc9e3",
+      "fio_json_path": "fio-randwrite-4k-qd1.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 61.424227714538574,
+          "clat_p95_ms": 0.214016,
+          "clat_p99_ms": 0.395264,
+          "iops": 15724.602295
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 120,
+        "rw": "randread",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "2bf9514f9907bd11ca1f",
+      "fio_json_path": "fio-randread-4k-qd1.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 48.091135025024414,
+          "clat_p95_ms": 0.127488,
+          "clat_p99_ms": 0.144384,
+          "iops": 12311.330739
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "aee07b58f10c79d510da",
+      "fio_json_path": "fio-randwrite-4k-qd4.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 107.90050029754639,
+          "clat_p95_ms": 0.374784,
+          "clat_p99_ms": 0.485376,
+          "iops": 27622.528146
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randread",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "a9ee22014b373ef09b11",
+      "fio_json_path": "fio-randread-4k-qd4.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 214.74407577514648,
+          "clat_p95_ms": 0.132096,
+          "clat_p99_ms": 0.154624,
+          "iops": 54974.483546
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 16,
+        "runtime_s": 120,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "3464df86bdd49e13e068",
+      "fio_json_path": "fio-randwrite-4k-qd16.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 128.76985836029053,
+          "clat_p95_ms": 0.790528,
+          "clat_p99_ms": 0.937984,
+          "iops": 32965.083915
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 16,
+        "runtime_s": 120,
+        "rw": "randread",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "c152618575d7aaa04d9b",
+      "fio_json_path": "fio-randread-4k-qd16.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 338.06528091430664,
+          "clat_p95_ms": 0.252928,
+          "clat_p99_ms": 0.354304,
+          "iops": 86544.712127
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 32,
+        "runtime_s": 120,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "08c10d41720e8dba2f78",
+      "fio_json_path": "fio-randwrite-4k-qd32.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 133.0570936203003,
+          "clat_p95_ms": 1.384448,
+          "clat_p99_ms": 1.67936,
+          "iops": 34062.616145
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 32,
+        "runtime_s": 120,
+        "rw": "randread",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "18d4c5c712cab3726e8c",
+      "fio_json_path": "fio-randread-4k-qd32.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 353.01863956451416,
+          "clat_p95_ms": 0.626688,
+          "clat_p99_ms": 0.733184,
+          "iops": 90372.771894
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 120,
+        "rw": "randrw",
+        "rwmixread": 70,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "fd8d2715e2c7a176a825",
+      "fio_json_path": "fio-randrw70-4k-qd1.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 33.91104507446289,
+          "clat_p95_ms": 0.144384,
+          "clat_p99_ms": 0.448512,
+          "iops": 8681.227656
+        },
+        "write": {
+          "bw_mib_s": 14.531063079833984,
+          "clat_p95_ms": 0.040704,
+          "clat_p99_ms": 0.197632,
+          "iops": 3719.952334
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randrw",
+        "rwmixread": 70,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "423fae4ccccf6745c2ba",
+      "fio_json_path": "fio-randrw70-4k-qd4.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 88.51807689666748,
+          "clat_p95_ms": 0.39936,
+          "clat_p99_ms": 0.864256,
+          "iops": 22660.627828
+        },
+        "write": {
+          "bw_mib_s": 37.9358491897583,
+          "clat_p95_ms": 0.20992,
+          "clat_p99_ms": 0.415744,
+          "iops": 9711.577404
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "128k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "read",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "0fbcd802dddfc387972c",
+      "fio_json_path": "fio-seq-read-128k.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 5030.20991230011,
+          "clat_p95_ms": 3.948544,
+          "clat_p99_ms": 5.013504,
+          "iops": 40241.679305
+        }
+      },
+      "size_effective_bytes": null
+    },
+    {
+      "case": {
+        "bs": "128k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "write",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "c4cdaaed70b4d6f970e7",
+      "fio_json_path": "fio-seq-write-128k.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 1821.8605470657349,
+          "clat_p95_ms": 4.75136,
+          "clat_p99_ms": 7.110656,
+          "iops": 14574.88438
+        }
+      },
+      "size_effective_bytes": null
+    },
+    {
+      "case": {
+        "bs": "1M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "read",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "a34a913bed6fabafe3b1",
+      "fio_json_path": "fio-seq-read-1m.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 5514.048829078674,
+          "clat_p95_ms": 17.69472,
+          "clat_p99_ms": 24.24832,
+          "iops": 5514.048829
+        }
+      },
+      "size_effective_bytes": null
+    },
+    {
+      "case": {
+        "bs": "1M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "write",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "4dcb4b1ee819606a3134",
+      "fio_json_path": "fio-seq-write-1m.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 1801.4329147338867,
+          "clat_p95_ms": 40.63232,
+          "clat_p99_ms": 48.49664,
+          "iops": 1801.432915
+        }
+      },
+      "size_effective_bytes": null
+    },
+    {
+      "case": {
+        "bs": "4M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "read",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "baff7fc01b735b92c2ae",
+      "fio_json_path": "fio-seq-read-4m.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 3892.4440879821777,
+          "clat_p95_ms": 98.041856,
+          "clat_p99_ms": 99.090432,
+          "iops": 973.111022
+        }
+      },
+      "size_effective_bytes": null
+    },
+    {
+      "case": {
+        "bs": "4M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "write",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "63fddef05ed6987a1898",
+      "fio_json_path": "fio-seq-write-4m.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 1796.8058776855469,
+          "clat_p95_ms": 154.140672,
+          "clat_p99_ms": 206.569472,
+          "iops": 449.20147
+        }
+      },
+      "size_effective_bytes": null
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 180,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "7d357dbd5b182ee17b06",
+      "fio_json_path": "fio-sustained-randwrite-4k-qd4-3m.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 99.35880088806152,
+          "clat_p95_ms": 0.411648,
+          "clat_p99_ms": 0.536576,
+          "iops": 25435.853134
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "1M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": null,
+        "rw": "write",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 17179869184,
+          "mode": "fixed_or_pct_free",
+          "pct_free": 60
+        },
+        "time_based": 0
+      },
+      "case_key": "bb416fb7632b3461bb62",
+      "fio_json_path": "fio-sustained-write-1m.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 1808.188941001892,
+          "clat_p95_ms": 39.583744,
+          "clat_p99_ms": 60.555264,
+          "iops": 1808.188942
+        }
+      },
+      "size_effective_bytes": 17179869184
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 600,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 4294967296,
+          "mode": "min_fixed_or_pct_free",
+          "pct_free": 60
+        },
+        "time_based": 1
+      },
+      "case_key": "21536cd514a14d4112c9",
+      "fio_json_path": "fio-sustained-randwrite-4k-qd4-10m.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 61.10076332092285,
+          "clat_p95_ms": 0.626688,
+          "clat_p99_ms": 0.75776,
+          "iops": 15641.795597
+        }
+      },
+      "size_effective_bytes": 4294967296
+    },
+    {
+      "case": {
+        "bs": "8k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 120,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "9c68d46afa8c45ad8bc6",
+      "fio_json_path": "fio-dblike-randwrite-8k-qd1.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 114.38862991333008,
+          "clat_p95_ms": 0.224256,
+          "clat_p99_ms": 0.395264,
+          "iops": 14641.744652
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "8k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 120,
+        "rw": "randread",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "97c7645cdd057650f626",
+      "fio_json_path": "fio-dblike-randread-8k-qd1.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 54.17682647705078,
+          "clat_p95_ms": 0.132096,
+          "clat_p99_ms": 0.154624,
+          "iops": 6934.633878
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "8k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "cde9a9be595aeac067ab",
+      "fio_json_path": "fio-dblike-randwrite-8k-qd4.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 171.9460277557373,
+          "clat_p95_ms": 0.432128,
+          "clat_p99_ms": 0.618496,
+          "iops": 22009.091591
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "8k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randread",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "c0f4d541d3c9904f483b",
+      "fio_json_path": "fio-dblike-randread-8k-qd4.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 240.90424156188965,
+          "clat_p95_ms": 0.146432,
+          "clat_p99_ms": 0.171008,
+          "iops": 30835.743035
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "16k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 120,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "c455095ec5d74ef3c0d1",
+      "fio_json_path": "fio-dblike-randwrite-16k-qd1.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 248.17774868011475,
+          "clat_p95_ms": 0.187392,
+          "clat_p99_ms": 0.313344,
+          "iops": 15883.375972
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "16k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 120,
+        "rw": "randread",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "9bbceae350a7dc056bce",
+      "fio_json_path": "fio-dblike-randread-16k-qd1.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 186.38972187042236,
+          "clat_p95_ms": 0.152576,
+          "clat_p99_ms": 0.162816,
+          "iops": 11928.942259
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "16k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "e1a249138d9f14607f4c",
+      "fio_json_path": "fio-dblike-randwrite-16k-qd4.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 429.3927755355835,
+          "clat_p95_ms": 0.33792,
+          "clat_p99_ms": 0.436224,
+          "iops": 27481.137657
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "16k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randread",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "b67946a3bbe15a2e8a20",
+      "fio_json_path": "fio-dblike-randread-16k-qd4.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 808.2980813980103,
+          "clat_p95_ms": 0.164864,
+          "clat_p99_ms": 0.18944,
+          "iops": 51731.077241
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 0,
+        "fdatasync": 1,
+        "ioengine": "sync",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 60,
+        "rw": "write",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "7c6478eec6aa43bb0edd",
+      "fio_json_path": "fio-dblike-fdatasync-write-4k-qd1.fio.json",
+      "ioengine_raw": "sync",
+      "ops": {
+        "write": {
+          "bw_mib_s": 106.30695152282715,
+          "clat_p95_ms": 0.009152,
+          "clat_p99_ms": 0.010304,
+          "iops": 27214.579757
+        }
+      },
+      "size_effective_bytes": 1073741824
+    }
+  ],
+  "mode": "update",
+  "repo": "edwardtoday/fio-tests",
+  "run": {
+    "engine": "libaio",
+    "invoked_profile": "full",
+    "out_dir": ".",
+    "run_id": "20251215T020806Z_9eeb914bfea89f730d68",
+    "system": "R740-5x1TSSD-RAID5",
+    "system_hash": "9eeb914bfea89f730d68",
+    "target_dir": ".",
+    "timestamp": "2025-12-15T02:08:06Z",
+    "timestamp_compact": "20251215T020806Z"
+  }
+}
