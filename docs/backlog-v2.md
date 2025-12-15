@@ -62,7 +62,7 @@
 ## M3：横向对比增强（目标：读者更爽）
 
 - [x] M3.0.1 Scoreboard 增加 rank / vs best%（可开关）
-- [ ] M3.0.2 baseline system：设置基准机并显示 vs baseline%
+- [x] M3.0.2 baseline system：设置基准机并显示 vs baseline%
 - [ ] M3.0.3 导出 CSV（当前视图）
 
 ---

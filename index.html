@@ -114,6 +114,11 @@
 	        <span data-i18n="show_rank">显示排名/距最佳</span>
 	      </label>
 
+	      <label style="display:flex; gap:6px; align-items:center;">
+	        <span data-i18n="baseline">基准系统</span>
+	        <select id="baselineSelect" style="min-width: 220px;"></select>
+	      </label>
+
 	      <label><span data-i18n="op">读写</span>
 	        <select id="opSelect">
 	          <option value="read" selected data-i18n="op_read">读</option>
@@ -480,6 +485,9 @@ const I18N = {
     show_rank: '显示排名/距最佳',
     col_rank: '排名',
     col_vs_best: '距最佳%',
+    baseline: '基准系统',
+    baseline_none: '(无)',
+    col_vs_baseline: '相对基准%',
   },
   en: {
     title: 'fio Results',
@@ -623,6 +631,9 @@ const I18N = {
     show_rank: 'Show rank / vs best',
     col_rank: 'Rank',
     col_vs_best: 'Vs best %',
+    baseline: 'Baseline',
+    baseline_none: '(None)',
+    col_vs_baseline: 'Vs baseline %',
   }
 };
 
@@ -1087,6 +1098,51 @@ function toast(msg) {
 
 let suppressHashSync = false;
 
+function refreshDynamicLabels() {
+  if (viewMode !== 'runs' || !runsView) return;
+  const caseDefs = runsView.caseDefs || {};
+
+  function updatePlaceholder(select, label) {
+    if (!select) return;
+    const opt = Array.from(select.options).find(o => o.value === '');
+    if (opt) opt.textContent = label;
+  }
+
+  // Explorer / scoreboard case option labels depend on language.
+  const caseSelect = document.getElementById('caseSelect');
+  if (caseSelect) {
+    Array.from(caseSelect.options).forEach(o => {
+      const sig = caseDefs[o.value];
+      if (!sig) return;
+      o.textContent = caseLabel(sig);
+    });
+  }
+
+  // Compare case list labels
+  const compareCases = document.getElementById('compareCases');
+  if (compareCases) {
+    Array.from(compareCases.options).forEach(o => {
+      const sig = caseDefs[o.value];
+      if (!sig) return;
+      o.textContent = caseLabel(sig);
+    });
+  }
+
+  // System detail history selector labels
+  if (systemHistoryCase) {
+    Array.from(systemHistoryCase.options).forEach(o => {
+      const [caseKey, op] = String(o.value || '').split('|');
+      const sig = caseDefs[caseKey];
+      if (!sig) return;
+      o.textContent = `${caseLabel(sig)} | ${opLabel(op)}`;
+    });
+  }
+
+  // Placeholder labels
+  updatePlaceholder(document.getElementById('systemSelect'), t('all'));
+  updatePlaceholder(document.getElementById('baselineSelect'), t('baseline_none'));
+}
+
 function parseHashParams() {
   const raw = (location.hash || '').replace(/^#/, '').trim();
   const params = {};
@@ -1140,6 +1196,7 @@ function applyStateFromHash() {
     const latestOnly = document.getElementById('latestOnly');
     const showHidden = document.getElementById('showHidden');
     const showRank = document.getElementById('showRank');
+    const baselineSelect = document.getElementById('baselineSelect');
 
     if (layoutSelect && p.layout && optExists(layoutSelect, p.layout)) {
       layoutSelect.value = p.layout;
@@ -1151,6 +1208,7 @@ function applyStateFromHash() {
     if (latestOnly && p.latest) latestOnly.checked = (p.latest === '1' || p.latest === 'true');
     if (showHidden && p.hidden) showHidden.checked = (p.hidden === '1' || p.hidden === 'true');
     if (showRank && p.rank) showRank.checked = (p.rank === '1' || p.rank === 'true');
+    if (baselineSelect && p.baseline && optExists(baselineSelect, p.baseline)) baselineSelect.value = p.baseline;
 
     // explorer filters (only if exists)
     const map = [
@@ -1232,6 +1290,7 @@ function syncStateToHash() {
   const latestOnly = document.getElementById('latestOnly');
   const showHidden = document.getElementById('showHidden');
   const showRank = document.getElementById('showRank');
+  const baselineSelect = document.getElementById('baselineSelect');
   const caseSelect = document.getElementById('caseSelect');
 
   if (layoutSelect) params.layout = layoutSelect.value;
@@ -1241,6 +1300,7 @@ function syncStateToHash() {
   if (latestOnly) params.latest = latestOnly.checked ? '1' : '0';
   if (showHidden) params.hidden = showHidden.checked ? '1' : '0';
   if (showRank) params.rank = showRank.checked ? '1' : '0';
+  if (baselineSelect && baselineSelect.value) params.baseline = baselineSelect.value;
 
   // include current case + explorer filters for reproducibility
   if (caseSelect && caseSelect.value) params.case_key = caseSelect.value;
@@ -1686,12 +1746,20 @@ let runsView = null;
 let systemDetailsSystem = '';
 let moderation = { hidden: {}, flagged: {} };
 let runsHeaderWantRank = false;
+let runsHeaderWantBaseline = false;
 
 function wantRankColumns() {
   return viewMode === 'runs'
     && layoutMode === 'scoreboard'
     && (document.getElementById('viewSelect')?.value || 'by_system') === 'by_system'
     && !!document.getElementById('showRank')?.checked;
+}
+
+function wantBaselineColumns() {
+  return viewMode === 'runs'
+    && layoutMode === 'scoreboard'
+    && (document.getElementById('viewSelect')?.value || 'by_system') === 'by_system'
+    && !!document.getElementById('baselineSelect')?.value;
 }
 
 function normalizeModeration(doc) {
@@ -1741,6 +1809,7 @@ if (langSelect) {
     lang = I18N[next] ? next : 'zh';
     localStorage.setItem('fio_ui_lang', lang);
     applyI18n();
+    refreshDynamicLabels();
     // 语言切换后强制重建表头与预设按钮，避免出现旧语言残留。
     currentHeaderMode = '';
     if (runsView && typeof runsView.rebuildScoreboardPresets === 'function') runsView.rebuildScoreboardPresets();
@@ -1756,6 +1825,12 @@ document.getElementById('showHidden')?.addEventListener('change', () => {
 });
 
 document.getElementById('showRank')?.addEventListener('change', () => {
+  currentHeaderMode = '';
+  ensureRunsHeaders();
+  renderAll();
+});
+
+document.getElementById('baselineSelect')?.addEventListener('change', () => {
   currentHeaderMode = '';
   ensureRunsHeaders();
   renderAll();
@@ -1793,8 +1868,10 @@ function clearHeadersAndSort() {
 
 function ensureRunsHeaders() {
   const wantRank = wantRankColumns();
-  if (currentHeaderMode === 'runs' && headerCells.length && runsHeaderWantRank === wantRank) return;
+  const wantBaseline = wantBaselineColumns();
+  if (currentHeaderMode === 'runs' && headerCells.length && runsHeaderWantRank === wantRank && runsHeaderWantBaseline === wantBaseline) return;
   runsHeaderWantRank = wantRank;
+  runsHeaderWantBaseline = wantBaseline;
   const headers = [
     { key: 'system', label: t('col_system') },
     { key: 'timestamp', label: t('col_timestamp') },
@@ -1803,6 +1880,9 @@ function ensureRunsHeaders() {
   if (wantRank) {
     headers.push({ key: 'rank', label: t('col_rank') });
     headers.push({ key: 'vs_best_pct', label: t('col_vs_best') });
+  }
+  if (wantBaseline) {
+    headers.push({ key: 'vs_baseline_pct', label: t('col_vs_baseline') });
   }
   headers.push({ key: 'iops', label: t('metric_iops') });
   headers.push({ key: 'bw_mib_s', label: t('metric_bw') });
@@ -1836,6 +1916,7 @@ function bindSortHandlers() {
         sortKey = key;
         sortDir = (key === 'device' || key === 'system' || key === 'timestamp' || key === 'op') ? 'asc'
           : ((key === 'rank' || key === 'vs_best_pct' || metricPrefersLower(key)) ? 'asc' : 'desc');
+        if (key === 'vs_baseline_pct') sortDir = 'desc';
       }
 
       // runs 模式下：如果按某个指标列排序，默认让图表 metric 跟随该指标（避免“排序看 clat，但图还是 bw”）。
@@ -1871,9 +1952,14 @@ function sortData(rows) {
 
 function renderTable(sorted) {
   const wantRank = wantRankColumns();
+  const wantBaseline = wantBaselineColumns();
   const numericKeys = (viewMode === 'legacy')
     ? ['rand_read_iops','rand_read_bw_mib','rand_write_iops','rand_write_bw_mib','seq_read_mib_s','seq_write_mib_s']
-    : (wantRank ? ['rank','vs_best_pct','iops','bw_mib_s','clat_p95_ms','clat_p99_ms'] : ['iops','bw_mib_s','clat_p95_ms','clat_p99_ms']);
+    : [
+      ...(wantRank ? ['rank','vs_best_pct'] : []),
+      ...(wantBaseline ? ['vs_baseline_pct'] : []),
+      'iops','bw_mib_s','clat_p95_ms','clat_p99_ms'
+    ];
   const stats = buildColumnStats(sorted, numericKeys);
 
   const primaryKey = (viewMode === 'runs')
@@ -1914,12 +2000,16 @@ function renderTable(sorted) {
       const vsBestTd = wantRank
         ? tdMetric('vs_best_pct', d.vs_best_pct, (isFiniteNum(d.vs_best_pct) ? `${d.vs_best_pct.toFixed(1)}%` : '-'), 1)
         : '';
+      const vsBaselineTd = wantBaseline
+        ? tdMetric('vs_baseline_pct', d.vs_baseline_pct, (isFiniteNum(d.vs_baseline_pct) ? `${d.vs_baseline_pct.toFixed(1)}%` : '-'), 1)
+        : '';
       tr.innerHTML = `
         <td><a href="#" data-system="${escHtml(d.system || '')}">${escHtml(d.system || '')}</a></td>
         <td><a href="results/runs/${runId}.json" target="_blank" rel="noopener">${escHtml(d.timestamp || '')}</a></td>
         <td>${escHtml(d.op || '')}</td>
         ${rankTd}
         ${vsBestTd}
+        ${vsBaselineTd}
         ${tdMetric('iops', d.iops, undefined, 0)}
         ${tdMetric('bw_mib_s', d.bw_mib_s, undefined, 2)}
         ${tdMetric('clat_p95_ms', d.clat_p95_ms, undefined, 2)}
@@ -2211,6 +2301,7 @@ function buildRunsView(doc) {
   const viewSelect = document.getElementById('viewSelect');
   const layoutSelect = document.getElementById('layoutSelect');
   const systemSelect = document.getElementById('systemSelect');
+  const baselineSelect = document.getElementById('baselineSelect');
   const compareControls = document.getElementById('compareControls');
   const scoreboardPanel = document.getElementById('scoreboardPanel');
   const scoreboardPresets = document.getElementById('scoreboardPresets');
@@ -2231,6 +2322,7 @@ function buildRunsView(doc) {
   setSelectOptions(mixSelect, uniqSorted(sigs.map(s => s.rwmixread)));
   setSelectOptions(sizePolicySelect, uniqSorted(sigs.map(s => s.size_policy?.mode)));
   setSelectOptions(systemSelect, uniqSorted(measurements.map(m => m.system)), t('all'));
+  setSelectOptions(baselineSelect, uniqSorted(measurements.map(m => m.system)), t('baseline_none'));
 
   function rebuildCompareOptions() {
     // systems: default select all
@@ -2537,6 +2629,8 @@ function buildRunsRows() {
   const systemFilter = document.getElementById('systemSelect').value;
   const metricKey = document.getElementById('metricSelect')?.value || 'bw_mib_s';
   const wantRank = wantRankColumns() && view === 'by_system';
+  const baselineSystem = String(document.getElementById('baselineSelect')?.value || '');
+  const wantBaseline = wantBaselineColumns() && view === 'by_system' && !!baselineSystem;
 
   if (!caseKey) return [];
 
@@ -2557,6 +2651,7 @@ function buildRunsRows() {
       clat_p99_ms: m.clat_p99_ms,
       rank: null,
       vs_best_pct: null,
+      vs_baseline_pct: null,
     }));
 
   // history/time 模式必须保留历史 run
@@ -2573,7 +2668,8 @@ function buildRunsRows() {
     }
   });
   const latestRows = Array.from(best.values());
-  if (wantRank) return applyRankAndVsBest(latestRows, metricKey);
+  if (wantRank) applyRankAndVsBest(latestRows, metricKey);
+  if (wantBaseline) applyVsBaseline(latestRows, metricKey, baselineSystem);
   return latestRows;
 }
 
@@ -2614,6 +2710,28 @@ function applyRankAndVsBest(rows, metricKey) {
   });
 
   return rows;
+}
+
+function applyVsBaseline(rows, metricKey, baselineSystem) {
+  const key = String(metricKey || 'bw_mib_s');
+  const preferLower = metricPrefersLower(key);
+  const baselineByOp = new Map(); // op -> value
+  rows.forEach(r => {
+    if (String(r.system || '') !== String(baselineSystem || '')) return;
+    const v = r[key];
+    if (!isFiniteNum(v)) return;
+    baselineByOp.set(String(r.op || ''), v);
+  });
+  rows.forEach(r => {
+    const base = baselineByOp.get(String(r.op || ''));
+    const v = r[key];
+    if (!isFiniteNum(base) || base === 0 || !isFiniteNum(v) || v === 0) {
+      r.vs_baseline_pct = null;
+      return;
+    }
+    // 中文说明：相对基准%：正数代表“比基准更好”，0 为基准本身。
+    r.vs_baseline_pct = preferLower ? ((base / v) - 1) * 100 : ((v / base) - 1) * 100;
+  });
 }
 
 function pickLatestBySystemCaseOp(measurements, systems, caseOpsWanted) {
