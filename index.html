@@ -23,7 +23,7 @@
     th, td { border-bottom: 1px solid var(--border); padding: 8px 10px; text-align: right; }
     th:first-child, td:first-child { text-align: left; }
     th { background: var(--header); cursor: pointer; user-select: none; position: sticky; top: 0; z-index: 2; }
-    tbody tr:nth-child(even) td { background: rgba(15, 23, 42, 0.015); }
+    tbody tr:nth-child(even) td:not(.heat) { background: rgba(15, 23, 42, 0.015); }
     tbody tr:hover td { outline: 2px solid rgba(59, 130, 246, 0.15); outline-offset: -2px; }
     .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
     canvas { background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 10px; box-shadow: var(--shadow); }
