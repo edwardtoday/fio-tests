@@ -29,16 +29,34 @@ jobs:
           LINODE_OBJECT_STORAGE_ACCESS_KEY: ${{ secrets.LINODE_OBJECT_STORAGE_ACCESS_KEY }}
           LINODE_OBJECT_STORAGE_SECRET_KEY: ${{ secrets.LINODE_OBJECT_STORAGE_SECRET_KEY }}
 
+      - name: Ensure awscli
+        run: |
+          set -euo pipefail
+          if command -v aws >/dev/null 2>&1; then
+            aws --version
+            exit 0
+          fi
+          sudo apt-get update -y
+          sudo apt-get install -y awscli
+          aws --version
+
       - name: Upload run-fio.sh
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.LINODE_OBJECT_STORAGE_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.LINODE_OBJECT_STORAGE_SECRET_KEY }}
           AWS_DEFAULT_REGION: us-east-1
+          AWS_EC2_METADATA_DISABLED: "true"
         run: |
           set -euo pipefail
-          aws --version
+          endpoint='https://us-east-1.linodeobjects.com'
+          bucket='sansi-share'
+          key='2025/run-fio.sh'
+
+          # Diagnostics (helps when keys/bucket/policy are wrong)
+          aws s3api head-bucket --bucket "${bucket}" --endpoint-url "${endpoint}" >/dev/null
+
           aws s3 cp ./run-fio.sh s3://sansi-share/2025/run-fio.sh \
-            --endpoint-url https://us-east-1.linodeobjects.com \
+            --endpoint-url "${endpoint}" \
             --acl public-read \
             --content-type text/x-shellscript \
             --cache-control "max-age=60"
