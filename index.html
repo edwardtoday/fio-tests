@@ -811,12 +811,12 @@ function openSystemDetails(system) {
 
   // 中文说明：latest 定义为“该 system 对每个 case_key/op 选择最新 timestamp 的 measurement”
   const latest = new Map(); // `${case_key}|${op}` -> measurement
-  (runsDoc.measurements || []).forEach(m => {
-    if (!m || m.system !== sys) return;
+  const sysList = runsView.measurementsBySystem?.get(sys) || [];
+  for (let i = sysList.length - 1; i >= 0; i--) {
+    const m = sysList[i];
     const key = `${m.case_key}|${m.op}`;
-    const prev = latest.get(key);
-    if (!prev || String(m.timestamp) > String(prev.timestamp)) latest.set(key, m);
-  });
+    if (!latest.has(key)) latest.set(key, m);
+  }
 
   const rows = [];
   latest.forEach(m => {
@@ -875,8 +875,8 @@ function openSystemDetails(system) {
   if (systemHistoryCase) {
     const options = [];
     const seen = new Set();
-    (runsDoc.measurements || []).forEach(m => {
-      if (!m || m.system !== sys) return;
+    sysList.forEach(m => {
+      if (!m) return;
       const k = `${m.case_key}|${m.op}`;
       if (seen.has(k)) return;
       seen.add(k);
@@ -1614,9 +1614,8 @@ function renderSystemHistory() {
   const metric = systemHistoryMetric?.value || 'bw_mib_s';
   const n = Number(systemHistoryN?.value || 10) || 10;
 
-  const list = (runsDoc.measurements || [])
-    .filter(m => m && m.system === systemDetailsSystem && m.case_key === caseKey && m.op === op)
-    .sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp)));
+  const sysList = runsView.measurementsBySystem?.get(systemDetailsSystem) || [];
+  const list = sysList.filter(m => m && m.case_key === caseKey && m.op === op);
   const sliced = list.slice(Math.max(0, list.length - n));
   const labels = sliced.map(m => String(m.timestamp || '').replace('T', ' ').replace('Z', ''));
   const values = sliced.map(m => (typeof m[metric] === 'number' ? m[metric] : null));
@@ -1678,8 +1677,9 @@ async function renderSystemDiff() {
 
   const mapA = new Map();
   const mapB = new Map();
-  (runsDoc.measurements || []).forEach(m => {
-    if (!m || m.system !== systemDetailsSystem) return;
+  const sysList = runsView.measurementsBySystem?.get(systemDetailsSystem) || [];
+  sysList.forEach(m => {
+    if (!m) return;
     const key = `${m.case_key}|${m.op}`;
     if (m.run_id === runA) mapA.set(key, m);
     if (m.run_id === runB) mapB.set(key, m);
@@ -2349,6 +2349,34 @@ function matchesFilter(sig, key, val) {
 function buildRunsView(doc) {
   const caseDefs = doc.case_defs || {};
   const measurements = doc.measurements || [];
+  const systems = uniqSorted(measurements.map(m => m.system));
+
+  // 中文说明：随着 measurements 增多，渲染阶段如果每次都全量 filter/sort 会越来越慢。
+  // 这里在初始化时构建索引，后续按需取子集。
+  const measurementsBySystem = new Map(); // system -> Measurement[]
+  const measurementsByCaseOp = new Map(); // `${case_key}|${op}` -> Measurement[]
+
+  function pushMap(map, key, value) {
+    let list = map.get(key);
+    if (!list) { list = []; map.set(key, list); }
+    list.push(value);
+  }
+
+  measurements.forEach(m => {
+    if (!m) return;
+    pushMap(measurementsBySystem, m.system, m);
+    pushMap(measurementsByCaseOp, `${m.case_key}|${m.op}`, m);
+  });
+
+  function sortByTimestampThenRunId(list) {
+    list.sort((a, b) => {
+      const ts = String(a.timestamp || '').localeCompare(String(b.timestamp || ''));
+      if (ts !== 0) return ts;
+      return String(a.run_id || '').localeCompare(String(b.run_id || ''));
+    });
+  }
+  measurementsBySystem.forEach(sortByTimestampThenRunId);
+  measurementsByCaseOp.forEach(sortByTimestampThenRunId);
 
   function stableStringify(value) {
     if (value === null || value === undefined) return 'null';
@@ -2421,12 +2449,12 @@ function buildRunsView(doc) {
   setSelectOptions(ioengineSelect, uniqSorted(sigs.map(s => s.ioengine)));
   setSelectOptions(mixSelect, uniqSorted(sigs.map(s => s.rwmixread)));
   setSelectOptions(sizePolicySelect, uniqSorted(sigs.map(s => s.size_policy?.mode)));
-  setSelectOptions(systemSelect, uniqSorted(measurements.map(m => m.system)), t('all'));
-  setSelectOptions(baselineSelect, uniqSorted(measurements.map(m => m.system)), t('baseline_none'));
+  setSelectOptions(systemSelect, systems, t('all'));
+  setSelectOptions(baselineSelect, systems, t('baseline_none'));
 
   function rebuildCompareOptions() {
     // systems: default select all
-    const allSystems = uniqSorted(measurements.map(m => m.system));
+    const allSystems = systems;
     const selectedSystems = getSelectedValues(compareSystems);
     setMultiSelectOptions(compareSystems, allSystems, selectedSystems.length ? selectedSystems : allSystems);
 
@@ -2717,7 +2745,16 @@ function buildRunsView(doc) {
     renderAll();
   });
 
-  return { caseDefs, measurements, caseOps, rebuildScoreboardPresets, applyLayoutMode };
+  return {
+    caseDefs,
+    measurements,
+    systems,
+    measurementsBySystem,
+    measurementsByCaseOp,
+    caseOps,
+    rebuildScoreboardPresets,
+    applyLayoutMode
+  };
 }
 
 function buildRunsRows() {
@@ -2737,34 +2774,54 @@ function buildRunsRows() {
   const selectedOp = op;
   const opsWanted = (selectedOp === 'auto') ? ['read', 'write'] : [selectedOp];
 
-  const rows = runsView.measurements
-    .filter(m => m.case_key === caseKey && opsWanted.includes(m.op))
-    .filter(m => !systemFilter || m.system === systemFilter)
-    .map(m => ({
-      system: m.system,
-      timestamp: m.timestamp,
-      run_id: m.run_id,
-      op: m.op,
-      iops: m.iops,
-      bw_mib_s: m.bw_mib_s,
-      clat_p95_ms: m.clat_p95_ms,
-      clat_p99_ms: m.clat_p99_ms,
-      rank: null,
-      vs_best_pct: null,
-      vs_baseline_pct: null,
-    }));
+  const rows = [];
+  opsWanted.forEach(opWanted => {
+    const list = runsView.measurementsByCaseOp?.get(`${caseKey}|${opWanted}`) || [];
+    list.forEach(m => {
+      if (systemFilter && m.system !== systemFilter) return;
+      rows.push({
+        system: m.system,
+        timestamp: m.timestamp,
+        run_id: m.run_id,
+        op: m.op,
+        iops: m.iops,
+        bw_mib_s: m.bw_mib_s,
+        clat_p95_ms: m.clat_p95_ms,
+        clat_p99_ms: m.clat_p99_ms,
+        rank: null,
+        vs_best_pct: null,
+        vs_baseline_pct: null,
+      });
+    });
+  });
 
   // history/time 模式必须保留历史 run
   if (view === 'history') return rows;
   if (!latestOnly) return rows;
 
   // auto: latest per system+op
-  const best = new Map();
-  rows.forEach(r => {
-    const key = `${r.system}|${r.op}`;
-    const prev = best.get(key);
-    if (!prev || (r.timestamp > prev.timestamp) || (r.timestamp === prev.timestamp && r.run_id > prev.run_id)) {
-      best.set(key, r);
+  const best = new Map(); // `${system}|${op}` -> row
+  opsWanted.forEach(opWanted => {
+    const list = runsView.measurementsByCaseOp?.get(`${caseKey}|${opWanted}`) || [];
+    for (let i = list.length - 1; i >= 0; i--) {
+      const m = list[i];
+      if (systemFilter && m.system !== systemFilter) continue;
+      const key = `${m.system}|${m.op}`;
+      if (best.has(key)) continue;
+      best.set(key, {
+        system: m.system,
+        timestamp: m.timestamp,
+        run_id: m.run_id,
+        op: m.op,
+        iops: m.iops,
+        bw_mib_s: m.bw_mib_s,
+        clat_p95_ms: m.clat_p95_ms,
+        clat_p99_ms: m.clat_p99_ms,
+        rank: null,
+        vs_best_pct: null,
+        vs_baseline_pct: null,
+      });
+      if (systemFilter) break;
     }
   });
   const latestRows = Array.from(best.values());
@@ -2835,6 +2892,7 @@ function applyVsBaseline(rows, metricKey, baselineSystem) {
 }
 
 function pickLatestBySystemCaseOp(measurements, systems, caseOpsWanted) {
+  // Back-compat fallback：全量遍历（慢）。新代码优先使用 pickLatestBySystemCaseOpIndexed。
   const best = new Map();
   const sysSet = new Set(systems);
   const caseOpSet = new Set(caseOpsWanted.map(x => `${x.case_key}|${x.op}`));
@@ -2848,6 +2906,29 @@ function pickLatestBySystemCaseOp(measurements, systems, caseOpsWanted) {
       best.set(key, m);
     }
   });
+  return best;
+}
+
+function pickLatestBySystemCaseOpIndexed(view, systems, caseOpsWanted) {
+  const best = new Map(); // `${system}|${case_key}|${op}` -> measurement
+  const sysSet = new Set(systems);
+
+  // 中文说明：caseOpsWanted 往往远小于全量 measurements；这里优先按 case/op 取子集，再从最新往旧找每个 system 的最新记录。
+  caseOpsWanted.forEach(co => {
+    const list = view.measurementsByCaseOp?.get(`${co.case_key}|${co.op}`) || [];
+    const remaining = new Set(systems);
+    for (let i = list.length - 1; i >= 0; i--) {
+      const m = list[i];
+      if (!sysSet.has(m.system)) continue;
+      const key = `${m.system}|${co.case_key}|${co.op}`;
+      if (!best.has(key)) {
+        best.set(key, m);
+        remaining.delete(m.system);
+        if (remaining.size === 0) break;
+      }
+    }
+  });
+
   return best;
 }
 
@@ -2881,10 +2962,10 @@ function buildCompareModel() {
     }
   });
 
-  const systemsFinal = systems.length ? systems : Array.from(new Set(runsView.measurements.map(m => m.system))).sort((a,b)=>a.localeCompare(b,'zh-Hans'));
+  const systemsFinal = systems.length ? systems : (runsView.systems || []).slice();
   const metricsFinal = metrics.length ? metrics : ['bw_mib_s'];
 
-  const latest = pickLatestBySystemCaseOp(runsView.measurements, systemsFinal, caseOpsWanted);
+  const latest = pickLatestBySystemCaseOpIndexed(runsView, systemsFinal, caseOpsWanted);
 
   const caseOpLabels = caseOpsWanted.map(x => {
     const sig = runsView.caseDefs[x.case_key] || {};
