@@ -72,3 +72,9 @@
 - [x] M4.0.1 data.json 索引增强（前端无需全量遍历）
 - [x] M4.0.2 前端按需加载 run.json（点击详情才加载）
 - [x] M4.0.3 history/compare 大表分页或虚拟列表
+
+---
+
+## M5：维护者工具（目标：治理更省心）
+
+- [x] M5.0.1 Run 详情提供“复制隐藏/标记条目”按钮（便于维护 `results/moderation.json`）

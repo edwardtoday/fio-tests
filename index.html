@@ -524,6 +524,14 @@ const I18N = {
     page_size: '每页',
     prev: '上一页',
     next: '下一页',
+    moderate_hide: '复制隐藏条目',
+    moderate_flag: '复制标记条目',
+    moderate_hint_hide: '将内容粘贴到 results/moderation.json 的 hidden 下',
+    moderate_hint_flag: '将内容粘贴到 results/moderation.json 的 flagged 下',
+    moderate_prompt_hide: '请输入隐藏原因（可留空）：',
+    moderate_prompt_flag: '请输入标记原因（可留空）：',
+    moderate_copied: '已复制',
+    moderate_copy_failed: '复制失败',
   },
   en: {
     title: 'fio Results',
@@ -675,6 +683,14 @@ const I18N = {
     page_size: 'Page size',
     prev: 'Prev',
     next: 'Next',
+    moderate_hide: 'Copy hide entry',
+    moderate_flag: 'Copy flag entry',
+    moderate_hint_hide: 'Paste into results/moderation.json -> hidden',
+    moderate_hint_flag: 'Paste into results/moderation.json -> flagged',
+    moderate_prompt_hide: 'Reason for hide (optional):',
+    moderate_prompt_flag: 'Reason for flag (optional):',
+    moderate_copied: 'Copied',
+    moderate_copy_failed: 'Copy failed',
   }
 };
 
@@ -1062,6 +1078,7 @@ function renderRunMetaHtml(run) {
   ]);
 
   const badges = renderModerationBadgesHtml(run?.run_id);
+  const runId = String(run?.run_id || '');
   const meta = run?.meta || {};
   const kernel = [meta.platform, meta.platform_release].filter(Boolean).join(' ');
   const fsType = getPath(meta, 'target_fs.fstype');
@@ -1082,7 +1099,14 @@ function renderRunMetaHtml(run) {
 
   const envLine = env ? `<div>${escHtml(t('meta_title'))}: ${env}</div>` : '';
   const badgesLine = badges ? `<div style="margin-top:6px;">${badges}</div>` : '';
-  return `<div>${base}</div>${envLine}${badgesLine}`;
+  const actionsLine = runId ? `
+    <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+      <button type="button" class="btn" data-moderate="hide" data-runid="${escHtml(runId)}" title="${escHtml(t('moderate_hint_hide'))}">${escHtml(t('moderate_hide'))}</button>
+      <button type="button" class="btn" data-moderate="flag" data-runid="${escHtml(runId)}" title="${escHtml(t('moderate_hint_flag'))}">${escHtml(t('moderate_flag'))}</button>
+      <span class="muted" style="font-size: 12px;">${escHtml(t('moderate_hint_hide'))} / ${escHtml(t('moderate_hint_flag'))}</span>
+    </div>
+  ` : '';
+  return `<div>${base}</div>${envLine}${badgesLine}${actionsLine}`;
 }
 
 function rwLabel(rw) {
@@ -1165,6 +1189,14 @@ function toCsv(headers, rows) {
     lines.push(r.map(csvEscapeCell).join(','));
   });
   return lines.join('\n') + '\n';
+}
+
+async function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    await navigator.clipboard.writeText(String(text));
+    return;
+  }
+  window.prompt('Copy', String(text));
 }
 
 function sanitizeFilenamePart(s) {
@@ -2008,6 +2040,29 @@ document.getElementById('exportCsvBtn')?.addEventListener('click', () => {
   } catch (e) {
     console.error(e);
     toast(t('export_failed'));
+  }
+});
+
+runDetailsMeta?.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-moderate][data-runid]');
+  if (!btn) return;
+  e.preventDefault();
+  const kind = String(btn.dataset.moderate || '');
+  const runId = String(btn.dataset.runid || '');
+  if (!runId || (kind !== 'hide' && kind !== 'flag')) return;
+  const promptKey = (kind === 'hide') ? 'moderate_prompt_hide' : 'moderate_prompt_flag';
+  const reason = window.prompt(t(promptKey), '') || '';
+  const entry = {
+    reason,
+    at: new Date().toISOString(),
+  };
+  const snippet = JSON.stringify({ [runId]: entry }, null, 2).trim().replace(/^\{\n/, '').replace(/\n\}$/, '');
+  try {
+    await copyText(snippet);
+    toast(t('moderate_copied'));
+  } catch (err) {
+    console.error(err);
+    toast(t('moderate_copy_failed'));
   }
 });
 
