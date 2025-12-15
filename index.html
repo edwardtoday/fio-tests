@@ -109,6 +109,11 @@
 	        <span data-i18n="show_hidden">显示被隐藏 run</span>
 	      </label>
 
+	      <label style="display:flex; gap:6px; align-items:center;">
+	        <input type="checkbox" id="showRank" />
+	        <span data-i18n="show_rank">显示排名/距最佳</span>
+	      </label>
+
 	      <label><span data-i18n="op">读写</span>
 	        <select id="opSelect">
 	          <option value="read" selected data-i18n="op_read">读</option>
@@ -472,6 +477,9 @@ const I18N = {
     hidden: '隐藏',
     flagged: '标记',
     hidden_runs: '已隐藏 run',
+    show_rank: '显示排名/距最佳',
+    col_rank: '排名',
+    col_vs_best: '距最佳%',
   },
   en: {
     title: 'fio Results',
@@ -612,6 +620,9 @@ const I18N = {
     hidden: 'Hidden',
     flagged: 'Flagged',
     hidden_runs: 'hidden runs',
+    show_rank: 'Show rank / vs best',
+    col_rank: 'Rank',
+    col_vs_best: 'Vs best %',
   }
 };
 
@@ -1128,6 +1139,7 @@ function applyStateFromHash() {
     const metricSelect = document.getElementById('metricSelect');
     const latestOnly = document.getElementById('latestOnly');
     const showHidden = document.getElementById('showHidden');
+    const showRank = document.getElementById('showRank');
 
     if (layoutSelect && p.layout && optExists(layoutSelect, p.layout)) {
       layoutSelect.value = p.layout;
@@ -1138,6 +1150,7 @@ function applyStateFromHash() {
     if (metricSelect && p.metric && optExists(metricSelect, p.metric)) metricSelect.value = p.metric;
     if (latestOnly && p.latest) latestOnly.checked = (p.latest === '1' || p.latest === 'true');
     if (showHidden && p.hidden) showHidden.checked = (p.hidden === '1' || p.hidden === 'true');
+    if (showRank && p.rank) showRank.checked = (p.rank === '1' || p.rank === 'true');
 
     // explorer filters (only if exists)
     const map = [
@@ -1218,6 +1231,7 @@ function syncStateToHash() {
   const metricSelect = document.getElementById('metricSelect');
   const latestOnly = document.getElementById('latestOnly');
   const showHidden = document.getElementById('showHidden');
+  const showRank = document.getElementById('showRank');
   const caseSelect = document.getElementById('caseSelect');
 
   if (layoutSelect) params.layout = layoutSelect.value;
@@ -1226,6 +1240,7 @@ function syncStateToHash() {
   if (metricSelect) params.metric = metricSelect.value;
   if (latestOnly) params.latest = latestOnly.checked ? '1' : '0';
   if (showHidden) params.hidden = showHidden.checked ? '1' : '0';
+  if (showRank) params.rank = showRank.checked ? '1' : '0';
 
   // include current case + explorer filters for reproducibility
   if (caseSelect && caseSelect.value) params.case_key = caseSelect.value;
@@ -1670,6 +1685,14 @@ let runsDocRaw = null;
 let runsView = null;
 let systemDetailsSystem = '';
 let moderation = { hidden: {}, flagged: {} };
+let runsHeaderWantRank = false;
+
+function wantRankColumns() {
+  return viewMode === 'runs'
+    && layoutMode === 'scoreboard'
+    && (document.getElementById('viewSelect')?.value || 'by_system') === 'by_system'
+    && !!document.getElementById('showRank')?.checked;
+}
 
 function normalizeModeration(doc) {
   const hidden = (doc && typeof doc.hidden === 'object' && doc.hidden) ? doc.hidden : {};
@@ -1732,6 +1755,12 @@ document.getElementById('showHidden')?.addEventListener('change', () => {
   renderAll();
 });
 
+document.getElementById('showRank')?.addEventListener('change', () => {
+  currentHeaderMode = '';
+  ensureRunsHeaders();
+  renderAll();
+});
+
 // copy link
 document.getElementById('copyLinkBtn')?.addEventListener('click', async () => {
   try {
@@ -1763,16 +1792,23 @@ function clearHeadersAndSort() {
 }
 
 function ensureRunsHeaders() {
-  if (currentHeaderMode === 'runs' && headerCells.length) return;
-  setHeaders([
+  const wantRank = wantRankColumns();
+  if (currentHeaderMode === 'runs' && headerCells.length && runsHeaderWantRank === wantRank) return;
+  runsHeaderWantRank = wantRank;
+  const headers = [
     { key: 'system', label: t('col_system') },
     { key: 'timestamp', label: t('col_timestamp') },
     { key: 'op', label: t('col_op') },
-    { key: 'iops', label: t('metric_iops') },
-    { key: 'bw_mib_s', label: t('metric_bw') },
-    { key: 'clat_p95_ms', label: t('metric_clat_p95') },
-    { key: 'clat_p99_ms', label: t('metric_clat_p99') }
-  ]);
+  ];
+  if (wantRank) {
+    headers.push({ key: 'rank', label: t('col_rank') });
+    headers.push({ key: 'vs_best_pct', label: t('col_vs_best') });
+  }
+  headers.push({ key: 'iops', label: t('metric_iops') });
+  headers.push({ key: 'bw_mib_s', label: t('metric_bw') });
+  headers.push({ key: 'clat_p95_ms', label: t('metric_clat_p95') });
+  headers.push({ key: 'clat_p99_ms', label: t('metric_clat_p99') });
+  setHeaders(headers);
   bindSortHandlers();
 }
 
@@ -1798,7 +1834,8 @@ function bindSortHandlers() {
         sortDir = sortDir === 'asc' ? 'desc' : 'asc';
       } else {
         sortKey = key;
-        sortDir = (key === 'device' || key === 'system' || key === 'timestamp') ? 'asc' : 'desc';
+        sortDir = (key === 'device' || key === 'system' || key === 'timestamp' || key === 'op') ? 'asc'
+          : ((key === 'rank' || key === 'vs_best_pct' || metricPrefersLower(key)) ? 'asc' : 'desc');
       }
 
       // runs 模式下：如果按某个指标列排序，默认让图表 metric 跟随该指标（避免“排序看 clat，但图还是 bw”）。
@@ -1833,9 +1870,10 @@ function sortData(rows) {
 }
 
 function renderTable(sorted) {
+  const wantRank = wantRankColumns();
   const numericKeys = (viewMode === 'legacy')
     ? ['rand_read_iops','rand_read_bw_mib','rand_write_iops','rand_write_bw_mib','seq_read_mib_s','seq_write_mib_s']
-    : ['iops','bw_mib_s','clat_p95_ms','clat_p99_ms'];
+    : (wantRank ? ['rank','vs_best_pct','iops','bw_mib_s','clat_p95_ms','clat_p99_ms'] : ['iops','bw_mib_s','clat_p95_ms','clat_p99_ms']);
   const stats = buildColumnStats(sorted, numericKeys);
 
   const primaryKey = (viewMode === 'runs')
@@ -1872,10 +1910,16 @@ function renderTable(sorted) {
         ${tdMetric('seq_write_mib_s', d.seq_write_mib_s, undefined, 1)}`;
     } else {
       const runId = encodeURIComponent(String(d.run_id || ''));
+      const rankTd = wantRank ? tdMetric('rank', d.rank, (d.rank == null ? '-' : String(Math.round(d.rank))), 0) : '';
+      const vsBestTd = wantRank
+        ? tdMetric('vs_best_pct', d.vs_best_pct, (isFiniteNum(d.vs_best_pct) ? `${d.vs_best_pct.toFixed(1)}%` : '-'), 1)
+        : '';
       tr.innerHTML = `
         <td><a href="#" data-system="${escHtml(d.system || '')}">${escHtml(d.system || '')}</a></td>
         <td><a href="results/runs/${runId}.json" target="_blank" rel="noopener">${escHtml(d.timestamp || '')}</a></td>
         <td>${escHtml(d.op || '')}</td>
+        ${rankTd}
+        ${vsBestTd}
         ${tdMetric('iops', d.iops, undefined, 0)}
         ${tdMetric('bw_mib_s', d.bw_mib_s, undefined, 2)}
         ${tdMetric('clat_p95_ms', d.clat_p95_ms, undefined, 2)}
@@ -2491,6 +2535,8 @@ function buildRunsRows() {
   const latestOnly = document.getElementById('latestOnly').checked;
   const view = document.getElementById('viewSelect').value;
   const systemFilter = document.getElementById('systemSelect').value;
+  const metricKey = document.getElementById('metricSelect')?.value || 'bw_mib_s';
+  const wantRank = wantRankColumns() && view === 'by_system';
 
   if (!caseKey) return [];
 
@@ -2508,7 +2554,9 @@ function buildRunsRows() {
       iops: m.iops,
       bw_mib_s: m.bw_mib_s,
       clat_p95_ms: m.clat_p95_ms,
-      clat_p99_ms: m.clat_p99_ms
+      clat_p99_ms: m.clat_p99_ms,
+      rank: null,
+      vs_best_pct: null,
     }));
 
   // history/time 模式必须保留历史 run
@@ -2524,7 +2572,48 @@ function buildRunsRows() {
       best.set(key, r);
     }
   });
-  return Array.from(best.values());
+  const latestRows = Array.from(best.values());
+  if (wantRank) return applyRankAndVsBest(latestRows, metricKey);
+  return latestRows;
+}
+
+function applyRankAndVsBest(rows, metricKey) {
+  const key = String(metricKey || 'bw_mib_s');
+  const preferLower = metricPrefersLower(key);
+  const byOp = new Map();
+  rows.forEach(r => {
+    const op = String(r.op || '');
+    const v = r[key];
+    if (!byOp.has(op)) byOp.set(op, []);
+    byOp.get(op).push(r);
+    if (!isFiniteNum(v)) {
+      r.rank = null;
+      r.vs_best_pct = null;
+    }
+  });
+
+  byOp.forEach(list => {
+    const usable = list.filter(r => isFiniteNum(r[key]));
+    if (usable.length === 0) return;
+    usable.sort((a, b) => preferLower ? (a[key] - b[key]) : (b[key] - a[key]));
+    const bestVal = usable[0][key];
+    usable.forEach((r, idx) => {
+      r.rank = idx + 1;
+      if (!isFiniteNum(bestVal) || bestVal === 0) {
+        r.vs_best_pct = (idx === 0) ? 0 : null;
+        return;
+      }
+      const v = r[key];
+      if (!isFiniteNum(v) || v === 0) {
+        r.vs_best_pct = null;
+        return;
+      }
+      // 中文说明：vs_best_pct = “距离最佳差多少（越小越好）”，最佳为 0。
+      r.vs_best_pct = preferLower ? ((v / bestVal) - 1) * 100 : ((bestVal / v) - 1) * 100;
+    });
+  });
+
+  return rows;
 }
 
 function pickLatestBySystemCaseOp(measurements, systems, caseOpsWanted) {
