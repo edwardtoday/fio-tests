@@ -591,6 +591,9 @@ if [[ "${EMIT_RUN_JSON}" == "yes" && -n "${SYSTEM_NAME}" ]]; then
 import hashlib
 import json
 import os
+import platform
+import socket
+import subprocess
 import sys
 from datetime import datetime
 
@@ -599,6 +602,76 @@ repo, mode = sys.argv[3], sys.argv[4]
 system, system_hash = sys.argv[5], sys.argv[6]
 run_id, ts_iso, ts_compact = sys.argv[7], sys.argv[8], sys.argv[9]
 engine, target_dir, out_dir, invoked_profile = sys.argv[10], sys.argv[11], sys.argv[12], sys.argv[13]
+
+from typing import List, Optional, Dict
+
+def run_cmd(cmd: List[str]) -> Optional[str]:
+  try:
+    out = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, text=True)
+    return out.strip()
+  except Exception:
+    return None
+
+def best_effort_target_fs(target_dir: str) -> Dict[str, str]:
+  info: Dict[str, str] = {}
+  # df -P is widely available; second line: Filesystem 1024-blocks Used Available Capacity Mounted on
+  dfp = run_cmd(["df", "-kP", target_dir])
+  if dfp:
+    lines = [ln for ln in dfp.splitlines() if ln.strip()]
+    if len(lines) >= 2:
+      cols = lines[1].split()
+      if len(cols) >= 6:
+        info["device"] = cols[0]
+        info["mountpoint"] = cols[5]
+
+  # Linux: df -PT provides fstype (may not exist on macOS)
+  dfpt = run_cmd(["df", "-PT", target_dir])
+  if dfpt:
+    lines = [ln for ln in dfpt.splitlines() if ln.strip()]
+    if len(lines) >= 2:
+      cols = lines[1].split()
+      if len(cols) >= 7:
+        info["fstype"] = cols[1]
+
+  # macOS: stat -f %T gives fs type (e.g. apfs, msdos)
+  st = run_cmd(["stat", "-f", "%T", target_dir])
+  if st and "fstype" not in info:
+    info["fstype"] = st
+
+  return info
+
+def best_effort_meta() -> Dict[str, object]:
+  meta: Dict[str, object] = {}
+  meta["hostname"] = socket.gethostname()
+  meta["platform"] = platform.system()
+  meta["platform_release"] = platform.release()
+  meta["platform_version"] = platform.version()
+  meta["machine"] = platform.machine()
+  meta["python_version"] = platform.python_version()
+
+  fio_v = run_cmd(["fio", "--version"]) or run_cmd(["fio", "-v"])
+  if fio_v:
+    meta["fio_version"] = fio_v.splitlines()[0].strip()
+
+  # Linux: /etc/os-release for distro; macOS: sw_vers
+  if meta["platform"] == "Linux":
+    osr = run_cmd(["sh", "-lc", "cat /etc/os-release 2>/dev/null | grep -E '^PRETTY_NAME=' | head -n 1 | cut -d= -f2- | tr -d '\"'"])
+    if osr:
+      meta["os_pretty_name"] = osr
+  elif meta["platform"] == "Darwin":
+    sw = run_cmd(["sw_vers", "-productVersion"])
+    if sw:
+      meta["os_pretty_name"] = f"macOS {sw}"
+    model = run_cmd(["sysctl", "-n", "hw.model"])
+    if model:
+      meta["hw_model"] = model
+
+  try:
+    meta["target_realpath"] = os.path.realpath(target_dir)
+  except Exception:
+    pass
+  meta["target_fs"] = best_effort_target_fs(target_dir)
+  return meta
 
 def sha256_20(data: bytes) -> str:
   return hashlib.sha256(data).hexdigest()[:20]
@@ -715,6 +788,7 @@ payload = {
     "engine": engine,
     "target_dir": target_dir,
     "out_dir": out_dir,
+    "meta": best_effort_meta(),
   },
   "cases": cases,
 }

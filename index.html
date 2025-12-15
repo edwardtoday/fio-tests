@@ -285,6 +285,7 @@
 			        </select>
 			      </label>
 			    </div>
+			    <div id="systemDiffMeta" class="notice" style="display:none; margin-top: 10px;"></div>
 			    <div style="margin-top: 10px; overflow:auto;">
 			      <table id="systemDiffTable" style="margin: 0;">
 			        <thead>
@@ -448,6 +449,18 @@ const I18N = {
     engine: '引擎',
     profile: 'profile',
     target_dir: 'target_dir',
+    meta_title: '环境信息',
+    meta_field: '字段',
+    meta_a: 'A',
+    meta_b: 'B',
+    meta_fio_version: 'fio',
+    meta_os: '操作系统',
+    meta_kernel: '内核',
+    meta_arch: '架构',
+    meta_fs: '文件系统',
+    meta_device: '设备',
+    meta_mount: '挂载点',
+    meta_target: '路径',
   },
   en: {
     title: 'fio Results',
@@ -572,6 +585,18 @@ const I18N = {
     engine: 'engine',
     profile: 'profile',
     target_dir: 'target_dir',
+    meta_title: 'Environment',
+    meta_field: 'Field',
+    meta_a: 'A',
+    meta_b: 'B',
+    meta_fio_version: 'fio',
+    meta_os: 'OS',
+    meta_kernel: 'Kernel',
+    meta_arch: 'Arch',
+    meta_fs: 'Filesystem',
+    meta_device: 'Device',
+    meta_mount: 'Mount',
+    meta_target: 'Path',
   }
 };
 
@@ -866,14 +891,13 @@ function openSystemDetails(system) {
 
 async function openRunDetails(runIdRaw) {
   if (viewMode !== 'runs') return;
-  const runId = encodeURIComponent(String(runIdRaw || ''));
   try {
-    const res = await fetch(`results/runs/${runId}.json`, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`failed to load run: ${res.status}`);
-    const doc = await res.json();
+    const doc = await loadRunDoc(runIdRaw);
+    if (!doc) throw new Error('failed to load run');
     const run = doc.run || {};
+    const runId = String(runIdRaw || '');
     runDetailsTitle.textContent = `${run.system || t('unknown')} | ${run.timestamp || ''} | ${runIdRaw || runId}`;
-    runDetailsMeta.textContent = `${t('engine')}=${run.engine || '-'} | ${t('profile')}=${run.invoked_profile || '-'} | ${t('target_dir')}=${run.target_dir || '-'}`;
+    runDetailsMeta.innerHTML = renderRunMetaHtml(run);
 
     const rows = [];
     (doc.cases || []).forEach(c => {
@@ -906,6 +930,77 @@ async function openRunDetails(runIdRaw) {
   } catch (err) {
     console.error(err);
   }
+}
+
+async function loadRunDoc(runIdRaw) {
+  const runIdKey = String(runIdRaw || '');
+  if (!runIdKey) return null;
+  if (runDocCache.has(runIdKey)) return await runDocCache.get(runIdKey);
+  const p = (async () => {
+    const runIdEnc = encodeURIComponent(runIdKey);
+    const res = await fetch(`results/runs/${runIdEnc}.json`, { cache: 'no-store' });
+    if (!res.ok) return null;
+    return await res.json();
+  })();
+  runDocCache.set(runIdKey, p);
+  const doc = await p;
+  if (!doc) runDocCache.delete(runIdKey);
+  return doc;
+}
+
+function getPath(obj, path) {
+  const parts = String(path || '').split('.');
+  let cur = obj;
+  for (const p of parts) {
+    if (!cur || typeof cur !== 'object') return undefined;
+    cur = cur[p];
+  }
+  return cur;
+}
+
+function metaValueToText(v) {
+  if (v === null || v === undefined) return '';
+  if (typeof v === 'string') return v;
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+  try { return JSON.stringify(v); } catch { return String(v); }
+}
+
+function renderKvInline(items) {
+  const parts = (items || []).filter(Boolean).map(({ label, value }) => {
+    const v = metaValueToText(value);
+    if (!v) return null;
+    return `${escHtml(label)}=${escHtml(v)}`;
+  }).filter(Boolean);
+  return parts.join(' | ');
+}
+
+function renderRunMetaHtml(run) {
+  const base = renderKvInline([
+    { label: t('engine'), value: run?.engine || '-' },
+    { label: t('profile'), value: run?.invoked_profile || '-' },
+    { label: t('target_dir'), value: run?.target_dir || '-' },
+  ]);
+
+  const meta = run?.meta || {};
+  const kernel = [meta.platform, meta.platform_release].filter(Boolean).join(' ');
+  const fsType = getPath(meta, 'target_fs.fstype');
+  const fsDev = getPath(meta, 'target_fs.device');
+  const fsMnt = getPath(meta, 'target_fs.mountpoint');
+  const targetPath = meta.target_realpath || meta.target_dir || '';
+
+  const env = renderKvInline([
+    { label: t('meta_fio_version'), value: meta.fio_version },
+    { label: t('meta_os'), value: meta.os_pretty_name },
+    { label: t('meta_kernel'), value: kernel },
+    { label: t('meta_arch'), value: meta.machine },
+    { label: t('meta_fs'), value: fsType },
+    { label: t('meta_device'), value: fsDev },
+    { label: t('meta_mount'), value: fsMnt },
+    { label: t('meta_target'), value: targetPath },
+  ]);
+
+  const envLine = env ? `<div>${escHtml(t('meta_title'))}: ${env}</div>` : '';
+  return `<div>${base}</div>${envLine}`;
 }
 
 function rwLabel(rw) {
@@ -1259,8 +1354,10 @@ const systemDiffRunA = document.getElementById('systemDiffRunA');
 const systemDiffRunB = document.getElementById('systemDiffRunB');
 const systemDiffMetric = document.getElementById('systemDiffMetric');
 const systemDiffTbody = document.querySelector('#systemDiffTable tbody');
+const systemDiffMeta = document.getElementById('systemDiffMeta');
 let systemDiffSortKey = 'pct';
 let systemDiffSortDir = 'desc';
+const runDocCache = new Map();
 document.getElementById('systemDetailsClose').addEventListener('click', closeDrawers);
 systemDetailsTbody.addEventListener('click', async (e) => {
   const aRun = e.target.closest('a[data-runid]');
@@ -1356,7 +1453,8 @@ systemHistoryCase?.addEventListener('change', () => { renderSystemHistory(); syn
 systemHistoryMetric?.addEventListener('change', () => { renderSystemHistory(); syncStateToHash(); });
 systemHistoryN?.addEventListener('change', () => { renderSystemHistory(); syncStateToHash(); });
 
-function renderSystemDiff() {
+let systemDiffRenderToken = 0;
+async function renderSystemDiff() {
   if (viewMode !== 'runs' || !runsDoc || !runsView) return;
   if (!systemDetailsSystem) return;
   if (!systemDiffTbody) return;
@@ -1366,8 +1464,10 @@ function renderSystemDiff() {
   const metric = systemDiffMetric?.value || 'bw_mib_s';
   if (!runA || !runB) {
     systemDiffTbody.innerHTML = '';
+    if (systemDiffMeta) systemDiffMeta.style.display = 'none';
     return;
   }
+  const token = ++systemDiffRenderToken;
 
   const preferLower = metricPrefersLower(metric);
   const fmtMetric = (v) => {
@@ -1455,11 +1555,69 @@ function renderSystemDiff() {
       renderSystemDiff();
     };
   });
+
+  if (systemDiffMeta) {
+    const [docA, docB] = await Promise.all([loadRunDoc(runA), loadRunDoc(runB)]);
+    if (token !== systemDiffRenderToken) return;
+    systemDiffMeta.innerHTML = renderRunMetaDiffHtml(docA?.run || {}, docB?.run || {});
+    systemDiffMeta.style.display = systemDiffMeta.innerHTML ? 'block' : 'none';
+  }
 }
 
 systemDiffRunA?.addEventListener('change', () => { renderSystemDiff(); syncStateToHash(); });
 systemDiffRunB?.addEventListener('change', () => { renderSystemDiff(); syncStateToHash(); });
 systemDiffMetric?.addEventListener('change', () => { renderSystemDiff(); syncStateToHash(); });
+
+function renderRunMetaDiffHtml(runA, runB) {
+  const metaA = runA?.meta || {};
+  const metaB = runB?.meta || {};
+  const kernelA = [metaA.platform, metaA.platform_release].filter(Boolean).join(' ');
+  const kernelB = [metaB.platform, metaB.platform_release].filter(Boolean).join(' ');
+  const fsA = metaA.target_fs || {};
+  const fsB = metaB.target_fs || {};
+
+  const fields = [
+    { label: t('meta_fio_version'), a: metaA.fio_version, b: metaB.fio_version },
+    { label: t('meta_os'), a: metaA.os_pretty_name, b: metaB.os_pretty_name },
+    { label: t('meta_kernel'), a: kernelA, b: kernelB },
+    { label: t('meta_arch'), a: metaA.machine, b: metaB.machine },
+    { label: t('meta_fs'), a: fsA.fstype, b: fsB.fstype },
+    { label: t('meta_device'), a: fsA.device, b: fsB.device },
+    { label: t('meta_mount'), a: fsA.mountpoint, b: fsB.mountpoint },
+    { label: t('meta_target'), a: metaA.target_realpath, b: metaB.target_realpath },
+  ];
+
+  const visible = fields.filter(f => metaValueToText(f.a) || metaValueToText(f.b));
+  if (!visible.length) return '';
+
+  const rows = visible.map(f => {
+    const a = metaValueToText(f.a) || '-';
+    const b = metaValueToText(f.b) || '-';
+    const same = a === b;
+    const bg = same ? '' : 'background: rgba(245, 158, 11, 0.12);';
+    return `
+      <tr>
+        <td style="text-align:left; font-weight: 600;">${escHtml(f.label)}</td>
+        <td style="text-align:left; ${bg}">${escHtml(a)}</td>
+        <td style="text-align:left; ${bg}">${escHtml(b)}</td>
+      </tr>
+    `;
+  }).join('');
+
+  return `
+    <div style="font-weight: 600; margin-bottom: 8px;">${escHtml(t('meta_title'))}</div>
+    <table style="margin: 0; width: 100%; font-size: 13px;">
+      <thead>
+        <tr>
+          <th style="text-align:left;">${escHtml(t('meta_field'))}</th>
+          <th style="text-align:left;">${escHtml(t('meta_a'))}</th>
+          <th style="text-align:left;">${escHtml(t('meta_b'))}</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
 
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
