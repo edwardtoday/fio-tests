@@ -63,7 +63,7 @@
 
 - [x] M3.0.1 Scoreboard 增加 rank / vs best%（可开关）
 - [x] M3.0.2 baseline system：设置基准机并显示 vs baseline%
-- [ ] M3.0.3 导出 CSV（当前视图）
+- [x] M3.0.3 导出 CSV（当前视图）
 
 ---
 

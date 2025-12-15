@@ -144,6 +144,8 @@
 	        </select>
 	      </label>
 
+	      <button id="exportCsvBtn" type="button" class="btn" data-i18n="export_csv">导出 CSV</button>
+
 	      <div id="explorerFilters" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
 	        <label><span data-i18n="filter_system">系统</span> <select id="systemSelect"></select></label>
 	        <label><span data-i18n="filter_rw">读写模式</span> <select id="rwSelect"></select></label>
@@ -488,6 +490,8 @@ const I18N = {
     baseline: '基准系统',
     baseline_none: '(无)',
     col_vs_baseline: '相对基准%',
+    export_csv: '导出 CSV',
+    export_failed: '导出失败',
   },
   en: {
     title: 'fio Results',
@@ -634,6 +638,8 @@ const I18N = {
     baseline: 'Baseline',
     baseline_none: '(None)',
     col_vs_baseline: 'Vs baseline %',
+    export_csv: 'Export CSV',
+    export_failed: 'Export failed',
   }
 };
 
@@ -1097,6 +1103,91 @@ function toast(msg) {
 }
 
 let suppressHashSync = false;
+
+function csvEscapeCell(v) {
+  if (v === null || v === undefined) return '';
+  const s = String(v);
+  if (/[,"\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+function downloadTextFile(filename, content, mime='text/plain;charset=utf-8') {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function toCsv(headers, rows) {
+  const lines = [];
+  lines.push(headers.map(csvEscapeCell).join(','));
+  rows.forEach(r => {
+    lines.push(r.map(csvEscapeCell).join(','));
+  });
+  return lines.join('\n') + '\n';
+}
+
+function sanitizeFilenamePart(s) {
+  return String(s || '')
+    .replace(/[^\w\-+.]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 80);
+}
+
+function exportCurrentViewCsv() {
+  const now = new Date();
+  const ts = now.toISOString().replace(/[:.]/g, '').replace('Z', 'Z');
+
+  // compare/matrix：表格结构复杂，直接导出当前 DOM 表格（最符合“所见即所得”）
+  const view = document.getElementById('viewSelect')?.value || '';
+  if (viewMode === 'runs' && (layoutMode === 'matrix' || view === 'compare')) {
+    const table = document.getElementById('results');
+    if (!table) return;
+    const rows = [];
+    const trAll = Array.from(table.querySelectorAll('tbody tr'));
+    trAll.forEach(tr => {
+      const cells = Array.from(tr.querySelectorAll('th,td')).map(td => td.textContent.trim());
+      if (cells.length) rows.push(cells);
+    });
+    const csv = rows.map(r => r.map(csvEscapeCell).join(',')).join('\n') + '\n';
+    downloadTextFile(`fio-compare-${ts}.csv`, csv, 'text/csv;charset=utf-8');
+    return;
+  }
+
+  // runs/legacy：按“当前表头列”导出结构化 CSV，并附带 run_id 便于追溯
+  if (viewMode === 'runs') ensureRunsHeaders();
+  if (viewMode === 'legacy') ensureLegacyHeaders();
+
+  const keys = headerCells.map(th => String(th.dataset.key || ''));
+  const labels = headerCells.map(th => String(th.dataset.label || th.textContent || '').replace(/ [↑↓]$/, '').trim());
+
+  let rowsData = [];
+  if (viewMode === 'runs') rowsData = sortData(buildRunsRows());
+  else rowsData = sortData(data);
+
+  const extraKeys = (viewMode === 'runs') ? ['run_id'] : [];
+  const extraLabels = (viewMode === 'runs') ? ['run_id'] : [];
+
+  const outHeaders = [...labels, ...extraLabels];
+  const outRows = rowsData.map(r => {
+    const base = keys.map(k => (r && Object.prototype.hasOwnProperty.call(r, k)) ? r[k] : '');
+    const extra = extraKeys.map(k => (r && Object.prototype.hasOwnProperty.call(r, k)) ? r[k] : '');
+    return [...base, ...extra];
+  });
+
+  const layout = document.getElementById('layoutSelect')?.value || layoutMode || 'runs';
+  const op = document.getElementById('opSelect')?.value || '';
+  const metric = document.getElementById('metricSelect')?.value || '';
+  const caseKey = document.getElementById('caseSelect')?.value || '';
+  const name = `fio-${sanitizeFilenamePart(layout)}-${sanitizeFilenamePart(view)}-${sanitizeFilenamePart(caseKey)}-${sanitizeFilenamePart(op)}-${sanitizeFilenamePart(metric)}-${ts}.csv`;
+  downloadTextFile(name, toCsv(outHeaders, outRows), 'text/csv;charset=utf-8');
+}
 
 function refreshDynamicLabels() {
   if (viewMode !== 'runs' || !runsView) return;
@@ -1834,6 +1925,15 @@ document.getElementById('baselineSelect')?.addEventListener('change', () => {
   currentHeaderMode = '';
   ensureRunsHeaders();
   renderAll();
+});
+
+document.getElementById('exportCsvBtn')?.addEventListener('click', () => {
+  try {
+    exportCurrentViewCsv();
+  } catch (e) {
+    console.error(e);
+    toast(t('export_failed'));
+  }
 });
 
 // copy link
