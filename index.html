@@ -236,6 +236,17 @@ function bindSortHandlers() {
         sortKey = key;
         sortDir = (key === 'device' || key === 'system' || key === 'timestamp') ? 'asc' : 'desc';
       }
+
+      // runs 模式下：如果按某个指标列排序，默认让图表 metric 跟随该指标（避免“排序看 clat，但图还是 bw”）。
+      if (viewMode === 'runs') {
+        const metricSelect = document.getElementById('metricSelect');
+        const view = document.getElementById('viewSelect')?.value;
+        const metricKeys = new Set(['iops', 'bw_mib_s', 'clat_p95_ms', 'clat_p99_ms']);
+        if (metricSelect && view !== 'compare' && metricKeys.has(sortKey)) {
+          metricSelect.value = sortKey;
+        }
+      }
+
       renderAll();
     });
   });
