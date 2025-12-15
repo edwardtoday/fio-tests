@@ -94,6 +94,7 @@ jobs:
 
           echo "uploading..."
           s3cmd --config /tmp/s3cmd.cfg put \
+            --acl-public \
             --mime-type text/x-shellscript \
             --add-header "Cache-Control:max-age=60" \
             ./run-fio.sh "s3://${bucket}/${key}"
