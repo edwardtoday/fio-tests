@@ -55,7 +55,7 @@
 - [x] M2.0.1 可比性提示：当筛选结果混合 runtime/direct/fdatasync/ioengine/size_policy 时提示
 - [x] M2.0.2 提供“一键修正”建议（例如固定 runtime_s=120）
 - [x] M2.0.3 展示 meta（fio/kernel/fs/mount/设备标识等）并在差异时提示
-- [ ] M2.0.4 维护者治理：隐藏/标记垃圾 run（不删除原始数据）
+- [x] M2.0.4 维护者治理：隐藏/标记垃圾 run（不删除原始数据）
 
 ---
 

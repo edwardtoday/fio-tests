@@ -29,6 +29,8 @@
     canvas { background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 10px; box-shadow: var(--shadow); }
     .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); }
     .chip { display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border:1px solid var(--border); border-radius:999px; background:#fff; font-size:12px; color: var(--muted); }
+    .chipWarn { border-color: rgba(245, 158, 11, 0.55); background: rgba(245, 158, 11, 0.10); color: #92400e; }
+    .chipDanger { border-color: rgba(225, 29, 72, 0.45); background: rgba(225, 29, 72, 0.10); color: #9f1239; }
     .btn { padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; background: #fff; cursor: pointer; }
     .btn:hover { background: #f8fafc; }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -100,6 +102,11 @@
 	      <label style="display:flex; gap:6px; align-items:center;">
 	        <input type="checkbox" id="latestOnly" checked />
 	        <span data-i18n="latest_only">仅显示同一系统最新结果</span>
+	      </label>
+
+	      <label style="display:flex; gap:6px; align-items:center;">
+	        <input type="checkbox" id="showHidden" />
+	        <span data-i18n="show_hidden">显示被隐藏 run</span>
 	      </label>
 
 	      <label><span data-i18n="op">读写</span>
@@ -461,6 +468,10 @@ const I18N = {
     meta_device: '设备',
     meta_mount: '挂载点',
     meta_target: '路径',
+    show_hidden: '显示被隐藏 run',
+    hidden: '隐藏',
+    flagged: '标记',
+    hidden_runs: '已隐藏 run',
   },
   en: {
     title: 'fio Results',
@@ -597,6 +608,10 @@ const I18N = {
     meta_device: 'Device',
     meta_mount: 'Mount',
     meta_target: 'Path',
+    show_hidden: 'Show hidden runs',
+    hidden: 'Hidden',
+    flagged: 'Flagged',
+    hidden_runs: 'hidden runs',
   }
 };
 
@@ -864,6 +879,7 @@ function openSystemDetails(system) {
 
     const tr = document.createElement('tr');
     const runIdEnc = encodeURIComponent(String(r.run_id || ''));
+    const badges = renderModerationBadgesHtml(r.run_id);
     tr.innerHTML = `
       <td style="text-align:left;">${escHtml(r.case_label)}</td>
       <td>${escHtml(opLabel(r.op))}</td>
@@ -874,6 +890,7 @@ function openSystemDetails(system) {
       <td>${escHtml(r.timestamp || '')}</td>
       <td style="text-align:left;">
         <a href="#" data-runid="${escHtml(r.run_id || '')}">${escHtml(r.run_id || '')}</a>
+        ${badges ? ` ${badges}` : ''}
         <a href="results/runs/${runIdEnc}.json" target="_blank" rel="noopener" style="margin-left:8px; color: var(--muted);">json</a>
       </td>`;
     systemDetailsTbody.appendChild(tr);
@@ -981,6 +998,7 @@ function renderRunMetaHtml(run) {
     { label: t('target_dir'), value: run?.target_dir || '-' },
   ]);
 
+  const badges = renderModerationBadgesHtml(run?.run_id);
   const meta = run?.meta || {};
   const kernel = [meta.platform, meta.platform_release].filter(Boolean).join(' ');
   const fsType = getPath(meta, 'target_fs.fstype');
@@ -1000,7 +1018,8 @@ function renderRunMetaHtml(run) {
   ]);
 
   const envLine = env ? `<div>${escHtml(t('meta_title'))}: ${env}</div>` : '';
-  return `<div>${base}</div>${envLine}`;
+  const badgesLine = badges ? `<div style="margin-top:6px;">${badges}</div>` : '';
+  return `<div>${base}</div>${envLine}${badgesLine}`;
 }
 
 function rwLabel(rw) {
@@ -1108,6 +1127,7 @@ function applyStateFromHash() {
     const opSelect = document.getElementById('opSelect');
     const metricSelect = document.getElementById('metricSelect');
     const latestOnly = document.getElementById('latestOnly');
+    const showHidden = document.getElementById('showHidden');
 
     if (layoutSelect && p.layout && optExists(layoutSelect, p.layout)) {
       layoutSelect.value = p.layout;
@@ -1117,6 +1137,7 @@ function applyStateFromHash() {
     if (opSelect && p.op && optExists(opSelect, p.op)) opSelect.value = p.op;
     if (metricSelect && p.metric && optExists(metricSelect, p.metric)) metricSelect.value = p.metric;
     if (latestOnly && p.latest) latestOnly.checked = (p.latest === '1' || p.latest === 'true');
+    if (showHidden && p.hidden) showHidden.checked = (p.hidden === '1' || p.hidden === 'true');
 
     // explorer filters (only if exists)
     const map = [
@@ -1143,6 +1164,8 @@ function applyStateFromHash() {
     if (caseSelect && p.case_key && optExists(caseSelect, p.case_key)) {
       caseSelect.value = p.case_key;
     }
+
+    applyModerationView();
 
     // apply layout visibility once
     if (runsView && typeof runsView.applyLayoutMode === 'function') runsView.applyLayoutMode();
@@ -1194,6 +1217,7 @@ function syncStateToHash() {
   const opSelect = document.getElementById('opSelect');
   const metricSelect = document.getElementById('metricSelect');
   const latestOnly = document.getElementById('latestOnly');
+  const showHidden = document.getElementById('showHidden');
   const caseSelect = document.getElementById('caseSelect');
 
   if (layoutSelect) params.layout = layoutSelect.value;
@@ -1201,6 +1225,7 @@ function syncStateToHash() {
   if (opSelect) params.op = opSelect.value;
   if (metricSelect) params.metric = metricSelect.value;
   if (latestOnly) params.latest = latestOnly.checked ? '1' : '0';
+  if (showHidden) params.hidden = showHidden.checked ? '1' : '0';
 
   // include current case + explorer filters for reproducibility
   if (caseSelect && caseSelect.value) params.case_key = caseSelect.value;
@@ -1239,6 +1264,13 @@ async function loadData() {
   const res = await fetch('results/data.json', { cache: 'no-store' });
   if (!res.ok) throw new Error(`failed to load results/data.json: ${res.status}`);
   const doc = await res.json();
+  try {
+    const mr = await fetch('results/moderation.json', { cache: 'no-store' });
+    if (mr.ok) doc.moderation = await mr.json();
+    else doc.moderation = { schema: 'fio-tests/moderation/v1', hidden: {}, flagged: {} };
+  } catch {
+    doc.moderation = { schema: 'fio-tests/moderation/v1', hidden: {}, flagged: {} };
+  }
   return doc;
 }
 
@@ -1634,8 +1666,49 @@ let headerCells = [];
 let currentHeaderMode = ''; // legacy|runs|compare
 let layoutMode = 'scoreboard'; // scoreboard|matrix|explorer
 let runsDoc = null;
+let runsDocRaw = null;
 let runsView = null;
 let systemDetailsSystem = '';
+let moderation = { hidden: {}, flagged: {} };
+
+function normalizeModeration(doc) {
+  const hidden = (doc && typeof doc.hidden === 'object' && doc.hidden) ? doc.hidden : {};
+  const flagged = (doc && typeof doc.flagged === 'object' && doc.flagged) ? doc.flagged : {};
+  return { hidden, flagged };
+}
+
+function moderationEntry(runIdRaw) {
+  const runId = String(runIdRaw || '');
+  if (!runId) return { hidden: null, flagged: null };
+  const h = moderation.hidden?.[runId] || null;
+  const f = moderation.flagged?.[runId] || null;
+  return { hidden: h, flagged: f };
+}
+
+function renderModerationBadgesHtml(runIdRaw) {
+  const { hidden, flagged } = moderationEntry(runIdRaw);
+  const parts = [];
+  if (hidden) {
+    const reason = (hidden && typeof hidden === 'object') ? (hidden.reason || '') : '';
+    parts.push(`<span class="chip chipDanger" title="${escHtml(reason)}">${escHtml(t('hidden'))}</span>`);
+  }
+  if (flagged) {
+    const reason = (flagged && typeof flagged === 'object') ? (flagged.reason || '') : '';
+    parts.push(`<span class="chip chipWarn" title="${escHtml(reason)}">${escHtml(t('flagged'))}</span>`);
+  }
+  return parts.join(' ');
+}
+
+function applyModerationView() {
+  if (!runsDocRaw) return;
+  const includeHidden = !!document.getElementById('showHidden')?.checked;
+  const hiddenIds = new Set(Object.keys(moderation.hidden || {}));
+  const runs = includeHidden ? (runsDocRaw.runs || []) : (runsDocRaw.runs || []).filter(r => r && !hiddenIds.has(String(r.run_id)));
+  const measurements = includeHidden ? (runsDocRaw.measurements || []) : (runsDocRaw.measurements || []).filter(m => m && !hiddenIds.has(String(m.run_id)));
+  runsDoc = { ...runsDocRaw, runs, measurements };
+  runsView = buildRunsView(runsDoc);
+  if (systemDetailsSystem && systemDetails?.style.display !== 'none') openSystemDetails(systemDetailsSystem);
+}
 
 const langSelect = document.getElementById('langSelect');
 if (langSelect) {
@@ -1653,6 +1726,11 @@ if (langSelect) {
   });
 }
 applyI18n();
+
+document.getElementById('showHidden')?.addEventListener('change', () => {
+  applyModerationView();
+  renderAll();
+});
 
 // copy link
 document.getElementById('copyLinkBtn')?.addEventListener('click', async () => {
@@ -2639,11 +2717,16 @@ function renderAll() {
     const sig = runsView.caseDefs[caseKey];
     const view = document.getElementById('viewSelect').value;
     const sys = document.getElementById('systemSelect').value;
+    const includeHidden = !!document.getElementById('showHidden')?.checked;
+    const hiddenCount = Object.keys(moderation.hidden || {}).length;
     runsHint.textContent = sig
       ? `${t('hint_case_key')}=${caseKey} | ${caseLabel(sig)} | ${t('hint_matched_systems')}=${sorted.length}`
       : `${t('hint_case_key')}=${caseKey} | ${t('hint_matched_systems')}=${sorted.length}`;
     if (view === 'history') {
       runsHint.textContent = (sig ? `${t('hint_case_key')}=${caseKey} | ${caseLabel(sig)}` : `${t('hint_case_key')}=${caseKey}`) + (sys ? ` | ${t('col_system')}=${sys}` : '') + ` | ${t('hint_runs')}=${sorted.length}`;
+    }
+    if (!includeHidden && hiddenCount > 0) {
+      runsHint.textContent += ` | ${t('hidden_runs')}=${hiddenCount}`;
     }
   }
 
@@ -2671,14 +2754,15 @@ tbody.addEventListener('click', async (e) => {
     const doc = await loadData();
 	    if (doc && Array.isArray(doc.measurements) && doc.measurements.length > 0) {
 	      viewMode = 'runs';
-	      runsDoc = doc;
+	      runsDocRaw = doc;
+	      moderation = normalizeModeration(doc.moderation || {});
 	      runsControls.style.display = 'block';
 	      layoutMode = 'scoreboard';
 	      sortKey = 'bw_mib_s';
 	      sortDir = 'desc';
 	      currentHeaderMode = '';
 	      ensureRunsHeaders();
-	      runsView = buildRunsView(doc);
+	      applyModerationView();
 	      applyStateFromHash();
 	      if (runsView && typeof runsView.rebuildScoreboardPresets === 'function') runsView.rebuildScoreboardPresets();
 	      data = [];
