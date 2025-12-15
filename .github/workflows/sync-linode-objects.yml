@@ -27,6 +27,18 @@ jobs:
             echo "Missing secrets: LINODE_OBJECT_STORAGE_ACCESS_KEY / LINODE_OBJECT_STORAGE_SECRET_KEY"
             exit 1
           fi
+          case "${LINODE_OBJECT_STORAGE_ACCESS_KEY}" in
+            *$'\n'*|*$'\r'*|*' '*|*$'\t'*)
+              echo "LINODE_OBJECT_STORAGE_ACCESS_KEY contains whitespace/newline; re-add secret without extra spaces/newlines."
+              exit 1
+              ;;
+          esac
+          case "${LINODE_OBJECT_STORAGE_SECRET_KEY}" in
+            *$'\n'*|*$'\r'*)
+              echo "LINODE_OBJECT_STORAGE_SECRET_KEY contains newline; re-add secret without extra newlines."
+              exit 1
+              ;;
+          esac
         env:
           LINODE_OBJECT_STORAGE_ACCESS_KEY: ${{ secrets.LINODE_OBJECT_STORAGE_ACCESS_KEY }}
           LINODE_OBJECT_STORAGE_SECRET_KEY: ${{ secrets.LINODE_OBJECT_STORAGE_SECRET_KEY }}
