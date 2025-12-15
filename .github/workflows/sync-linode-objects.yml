@@ -76,16 +76,16 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y s3cmd
 
-          cat > /tmp/s3cmd.cfg <<EOF
-[default]
-access_key = ${AWS_ACCESS_KEY_ID}
-secret_key = ${AWS_SECRET_ACCESS_KEY}
-host_base = us-east-1.linodeobjects.com
-host_bucket = us-east-1.linodeobjects.com
-bucket_location = us-east-1
-use_https = True
-signature_v2 = False
-EOF
+          {
+            echo '[default]'
+            echo "access_key = ${AWS_ACCESS_KEY_ID}"
+            echo "secret_key = ${AWS_SECRET_ACCESS_KEY}"
+            echo 'host_base = us-east-1.linodeobjects.com'
+            echo 'host_bucket = us-east-1.linodeobjects.com'
+            echo 'bucket_location = us-east-1'
+            echo 'use_https = True'
+            echo 'signature_v2 = False'
+          } > /tmp/s3cmd.cfg
 
           echo "checking bucket access..."
           s3cmd --config /tmp/s3cmd.cfg ls "s3://${bucket}/" >/dev/null
