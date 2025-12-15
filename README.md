@@ -29,6 +29,46 @@ Profile：
 - `full`：`standard` + 持续顺序写（16GiB 或可用空间 60%）+ 持续随机写（10min）+ DB-like（buffered+fdatasync + 8K/16K 随机读写 @QD1/@QD4）
 - `db`：4K/8K/16K 随机读/写 @QD1/@QD4 + `fdatasync` 写入测试（buffered）
 
+### Profile 明细（case 列表）
+
+说明：
+
+- 所有 case 统一输出为 `fio-*.fio.json`（fio 原始 JSON）和 `fio-run-*.json`（归一化指标）。
+- `ioengine` 在结果聚合时会把 macOS 的 `posixaio` 与 Linux 的 `libaio` 归一为 `native_aio`，方便跨平台横向对比（原始值会保留在 run JSON 里）。
+- 预计用时是“纯 runtime”粗略估算，实际会受文件初始化/缓存/设备性能影响。
+
+**quick**（约 `4×120s + 180s ≈ 11 分钟`）
+
+- 4K `randwrite` QD1 `rt=120s` `direct=1` `native_aio`
+- 4K `randread` QD1 `rt=120s` `direct=1` `native_aio`
+- 1M `read` QD64 `rt=120s` `direct=1` `native_aio`
+- 1M `write` QD64 `rt=120s` `direct=1` `native_aio`
+- 4K `randwrite` QD4 `rt=180s` `direct=1` `native_aio`（short sustained）
+
+**standard**（约 `17×120s + 180s ≈ 37 分钟`）
+
+- 4K `randread/randwrite`：QD1 / QD4 / QD16 / QD32（共 8 项）`rt=120s` `direct=1` `native_aio`
+- 4K `randrw` 70/30：QD1 / QD4（共 2 项）`rt=120s` `direct=1` `native_aio`
+- 顺序读写：128K / 1M / 4M（共 6 项）QD64 `rt=120s` `direct=1` `native_aio`
+- 4K `randwrite` QD4 `rt=180s` `direct=1` `native_aio`（short sustained）
+
+**full**（约 `standard + 10min + 8×120s + 60s + sustained_write_time ≈ 64 分钟 + sustained_write_time`）
+
+- 含 `standard` 全部
+- 持续顺序写：1M `write` QD64（非 time_based），写入 `16GiB` 或 `可用空间 60%`（以实际耗时为准）
+- 持续随机写：4K `randwrite` QD4 `rt=600s` `direct=1` `native_aio`（10min）
+- DB-like 随机：8K/16K `randread/randwrite` @QD1/@QD4（共 8 项）`rt=120s` `direct=1` `native_aio`
+- DB-like 落盘：4K `write` QD1 `rt=60s` `direct=0` `ioengine=sync` `fdatasync=1`
+
+**db**（约 `12×120s + 3×60s ≈ 27 分钟`）
+
+- 4K/8K/16K `randread/randwrite` @QD1/@QD4（共 12 项）`rt=120s` `direct=1` `native_aio`
+- 落盘：4K/8K/16K `write` QD1 `rt=60s` `direct=0` `ioengine=sync` `fdatasync=1`
+
+### macOS：`failed to setup shm segment`
+
+如果在 macOS 上运行 fio 出现 `error: failed to setup shm segment`，通常是系统 SysV 共享内存段被遗留（例如上次 fio 被中断）。脚本会自动清理“当前用户、无进程挂载”的段并重试一次；也可手动用 `ipcs -m -a` 查看并用 `ipcrm -m <id>` 清理。
+
 当前目录运行（示例固定用 `.`）：
 
 ```sh

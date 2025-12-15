@@ -236,10 +236,48 @@ run_json() {
     echo "---- existing ${json_out} does not match expected params; rerun"
   fi
 
+  cleanup_sysv_shm_leaks() {
+    if [[ "$(uname -s)" != "Darwin" ]]; then
+      return 0
+    fi
+    if ! command -v ipcs >/dev/null 2>&1 || ! command -v ipcrm >/dev/null 2>&1; then
+      return 0
+    fi
+    local user
+    user="$(id -un)"
+    # macOS kern.sysv.shmall/shmmax are small by default; fio may leak SysV shm segments on interruption.
+    # Only clean segments that are:
+    # - owned by current user
+    # - key is private (0x00000000)
+    # - nattch == 0 (no process attached)
+    ipcs -m -a 2>/dev/null | awk -v user="${user}" 'NR>3 && $1=="m" && $3=="0x00000000" && $5==user && $9==0 {print $2}' | while read -r seg_id; do
+      ipcrm -m "${seg_id}" >/dev/null 2>&1 || true
+    done
+  }
+
   echo "---- running: ${cmd}"
+  local errf
+  errf="$(mktemp -t fio_err.XXXXXX)"
   # Use fio JSON output so n8n / index.html can reliably extract IOPS/BW/p95/p99.
-  eval "${cmd} --output-format=json --output='${json_out}'"
-  echo "---- done: ${json_out}"
+  if eval "${cmd} --output-format=json --output='${json_out}'" 2>"${errf}"; then
+    rm -f "${errf}"
+    echo "---- done: ${json_out}"
+    return 0
+  fi
+
+  if rg -q "failed to setup shm segment" "${errf}" 2>/dev/null || grep -q "failed to setup shm segment" "${errf}"; then
+    echo "WARN: fio failed to setup shm; attempting to cleanup leaked SysV shm segments and retry once..." >&2
+    cleanup_sysv_shm_leaks
+    if eval "${cmd} --output-format=json --output='${json_out}'" 2>>"${errf}"; then
+      rm -f "${errf}"
+      echo "---- done: ${json_out}"
+      return 0
+    fi
+  fi
+
+  cat "${errf}" >&2
+  rm -f "${errf}"
+  return 1
 }
 
 bytes_free() {
