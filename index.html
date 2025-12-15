@@ -135,6 +135,21 @@
 	        </select>
 	      </label>
 
+	      <div id="historyPager" style="display:none; align-items:center; gap:8px; flex-wrap:wrap;">
+	        <span class="chip" id="historyPagerText"></span>
+	        <label><span data-i18n="page_size">每页</span>
+	          <select id="historyPageSize">
+	            <option value="50">50</option>
+	            <option value="100">100</option>
+	            <option value="200" selected>200</option>
+	            <option value="500">500</option>
+	            <option value="1000">1000</option>
+	          </select>
+	        </label>
+	        <button id="historyPrev" type="button" class="btn" data-i18n="prev">上一页</button>
+	        <button id="historyNext" type="button" class="btn" data-i18n="next">下一页</button>
+	      </div>
+
 	      <label><span data-i18n="metric">指标</span>
 	        <select id="metricSelect">
 	          <option value="bw_mib_s" selected data-i18n="metric_bw">吞吐 MiB/s</option>
@@ -184,6 +199,20 @@
 	            <option value="run" data-i18n="compare_group_by_run">按系统</option>
 	          </select>
 	        </label>
+
+	        <div id="comparePager" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+	          <span class="chip" id="comparePagerText"></span>
+	          <label><span data-i18n="page_size">每页</span>
+	            <select id="comparePageSize">
+	              <option value="10">10</option>
+	              <option value="20" selected>20</option>
+	              <option value="50">50</option>
+	              <option value="100">100</option>
+	            </select>
+	          </label>
+	          <button id="comparePrev" type="button" class="btn" data-i18n="prev">上一页</button>
+	          <button id="compareNext" type="button" class="btn" data-i18n="next">下一页</button>
+	        </div>
 
 	        <label><span data-i18n="compare_systems_multi">系统（多选）</span>
 	          <select id="compareSystems" multiple size="6" style="min-width: 260px;"></select>
@@ -492,6 +521,9 @@ const I18N = {
     col_vs_baseline: '相对基准%',
     export_csv: '导出 CSV',
     export_failed: '导出失败',
+    page_size: '每页',
+    prev: '上一页',
+    next: '下一页',
   },
   en: {
     title: 'fio Results',
@@ -640,6 +672,9 @@ const I18N = {
     col_vs_baseline: 'Vs baseline %',
     export_csv: 'Export CSV',
     export_failed: 'Export failed',
+    page_size: 'Page size',
+    prev: 'Prev',
+    next: 'Next',
   }
 };
 
@@ -1288,6 +1323,8 @@ function applyStateFromHash() {
     const showHidden = document.getElementById('showHidden');
     const showRank = document.getElementById('showRank');
     const baselineSelect = document.getElementById('baselineSelect');
+    const historyPageSize = document.getElementById('historyPageSize');
+    const comparePageSize = document.getElementById('comparePageSize');
 
     if (layoutSelect && p.layout && optExists(layoutSelect, p.layout)) {
       layoutSelect.value = p.layout;
@@ -1300,6 +1337,10 @@ function applyStateFromHash() {
     if (showHidden && p.hidden) showHidden.checked = (p.hidden === '1' || p.hidden === 'true');
     if (showRank && p.rank) showRank.checked = (p.rank === '1' || p.rank === 'true');
     if (baselineSelect && p.baseline && optExists(baselineSelect, p.baseline)) baselineSelect.value = p.baseline;
+    if (historyPageSize && p.hps && optExists(historyPageSize, p.hps)) historyPageSize.value = p.hps;
+    if (comparePageSize && p.cps && optExists(comparePageSize, p.cps)) comparePageSize.value = p.cps;
+    if (p.hpage) historyPage = Math.max(1, Number(p.hpage) || 1);
+    if (p.cpage) comparePage = Math.max(1, Number(p.cpage) || 1);
 
     // explorer filters (only if exists)
     const map = [
@@ -1382,6 +1423,8 @@ function syncStateToHash() {
   const showHidden = document.getElementById('showHidden');
   const showRank = document.getElementById('showRank');
   const baselineSelect = document.getElementById('baselineSelect');
+  const historyPageSize = document.getElementById('historyPageSize');
+  const comparePageSize = document.getElementById('comparePageSize');
   const caseSelect = document.getElementById('caseSelect');
 
   if (layoutSelect) params.layout = layoutSelect.value;
@@ -1392,6 +1435,10 @@ function syncStateToHash() {
   if (showHidden) params.hidden = showHidden.checked ? '1' : '0';
   if (showRank) params.rank = showRank.checked ? '1' : '0';
   if (baselineSelect && baselineSelect.value) params.baseline = baselineSelect.value;
+  if (historyPageSize) params.hps = historyPageSize.value;
+  if (comparePageSize) params.cps = comparePageSize.value;
+  params.hpage = String(historyPage);
+  params.cpage = String(comparePage);
 
   // include current case + explorer filters for reproducibility
   if (caseSelect && caseSelect.value) params.case_key = caseSelect.value;
@@ -1831,6 +1878,8 @@ let sortDir = 'asc';
 let headerCells = [];
 let currentHeaderMode = ''; // legacy|runs|compare
 let layoutMode = 'scoreboard'; // scoreboard|matrix|explorer
+let historyPage = 1;
+let comparePage = 1;
 let runsDoc = null;
 let runsDocRaw = null;
 let runsView = null;
@@ -1927,6 +1976,32 @@ document.getElementById('baselineSelect')?.addEventListener('change', () => {
   renderAll();
 });
 
+document.getElementById('historyPageSize')?.addEventListener('change', () => {
+  historyPage = 1;
+  renderAll();
+});
+document.getElementById('historyPrev')?.addEventListener('click', () => {
+  historyPage = Math.max(1, historyPage - 1);
+  renderAll();
+});
+document.getElementById('historyNext')?.addEventListener('click', () => {
+  historyPage = historyPage + 1;
+  renderAll();
+});
+
+document.getElementById('comparePageSize')?.addEventListener('change', () => {
+  comparePage = 1;
+  renderAll();
+});
+document.getElementById('comparePrev')?.addEventListener('click', () => {
+  comparePage = Math.max(1, comparePage - 1);
+  renderAll();
+});
+document.getElementById('compareNext')?.addEventListener('click', () => {
+  comparePage = comparePage + 1;
+  renderAll();
+});
+
 document.getElementById('exportCsvBtn')?.addEventListener('click', () => {
   try {
     exportCurrentViewCsv();
@@ -1935,6 +2010,40 @@ document.getElementById('exportCsvBtn')?.addEventListener('click', () => {
     toast(t('export_failed'));
   }
 });
+
+function setPagerState({ containerId, textId, prevId, nextId, pageSizeId, page, pageCount, total }) {
+  const container = document.getElementById(containerId);
+  const text = document.getElementById(textId);
+  const prev = document.getElementById(prevId);
+  const next = document.getElementById(nextId);
+  if (!container || !text || !prev || !next) return;
+  container.style.display = 'flex';
+  if (pageCount <= 1) {
+    text.textContent = `${total}`;
+    prev.disabled = true;
+    next.disabled = true;
+    return;
+  }
+  text.textContent = `${page}/${pageCount} (${total})`;
+  prev.disabled = page <= 1;
+  next.disabled = page >= pageCount;
+}
+
+function getIntFromSelect(id, fallback) {
+  const el = document.getElementById(id);
+  const n = Number(el?.value);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
+}
+
+function applyPaging(items, page, pageSize) {
+  const total = items.length;
+  const size = Math.max(1, pageSize | 0);
+  const pageCount = Math.max(1, Math.ceil(total / size));
+  const safePage = Math.min(pageCount, Math.max(1, page | 0));
+  const start = (safePage - 1) * size;
+  const end = Math.min(total, start + size);
+  return { total, pageCount, page: safePage, slice: items.slice(start, end) };
+}
 
 // copy link
 document.getElementById('copyLinkBtn')?.addEventListener('click', async () => {
@@ -2614,6 +2723,8 @@ function buildRunsView(doc) {
     const latestOnly = document.getElementById('latestOnly');
     if (viewSelect.value === 'history') latestOnly.checked = false;
     if (viewSelect.value === 'compare') latestOnly.checked = false;
+    if (viewSelect.value === 'history') historyPage = 1;
+    if (viewSelect.value === 'compare') comparePage = 1;
     // op=auto 仅用于 compare；离开 compare 时回到 read，避免普通 case 比较出现空表
     if (viewSelect.value !== 'compare' && opSelect.value === 'auto') opSelect.value = 'read';
     compareControls.style.display = (viewSelect.value === 'compare') ? 'block' : 'none';
@@ -2625,7 +2736,10 @@ function buildRunsView(doc) {
   document.getElementById('latestOnly').addEventListener('change', renderAll);
 
   [compareGroupBy, compareSystems, compareCases, compareMetrics].forEach(sel => {
-    sel.addEventListener('change', renderAll);
+    sel.addEventListener('change', () => {
+      comparePage = 1;
+      renderAll();
+    });
   });
 
   rebuildCaseOptions();
@@ -2962,7 +3076,11 @@ function buildCompareModel() {
     }
   });
 
-  const systemsFinal = systems.length ? systems : (runsView.systems || []).slice();
+  const systemsAll = systems.length ? systems : (runsView.systems || []).slice();
+  const pageSize = getIntFromSelect('comparePageSize', 20);
+  const paged = applyPaging(systemsAll, comparePage, pageSize);
+  comparePage = paged.page;
+  const systemsFinal = paged.slice;
   const metricsFinal = metrics.length ? metrics : ['bw_mib_s'];
 
   const latest = pickLatestBySystemCaseOpIndexed(runsView, systemsFinal, caseOpsWanted);
@@ -2975,7 +3093,7 @@ function buildCompareModel() {
     return { ...x, label: base + suffix };
   });
 
-  return { groupBy, systems: systemsFinal, caseOpsWanted: caseOpLabels, metrics: metricsFinal, latest };
+  return { groupBy, systems: systemsFinal, systemsAll, pageSize, pageCount: paged.pageCount, page: paged.page, totalSystems: paged.total, caseOpsWanted: caseOpLabels, metrics: metricsFinal, latest };
 }
 
 function renderCompare() {
@@ -2996,6 +3114,17 @@ function renderCompare() {
   const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
   tbody.innerHTML = '';
+
+  setPagerState({
+    containerId: 'comparePager',
+    textId: 'comparePagerText',
+    prevId: 'comparePrev',
+    nextId: 'compareNext',
+    pageSizeId: 'comparePageSize',
+    page: model.page,
+    pageCount: model.pageCount,
+    total: model.totalSystems
+  });
 
   if (groupBy === 'run') {
     model.systems.forEach(system => {
@@ -3075,6 +3204,7 @@ function renderCompare() {
 }
 
 function renderAll() {
+  const view = (viewMode === 'runs') ? (document.getElementById('viewSelect')?.value || 'by_system') : '';
   if (viewMode === 'runs' && (layoutMode === 'matrix' || document.getElementById('viewSelect')?.value === 'compare')) {
     renderCompare();
     return;
@@ -3094,7 +3224,34 @@ function renderAll() {
   }
 
   const rows = (viewMode === 'legacy') ? data : buildRunsRows();
-  const sorted = sortData(rows);
+  const sortedAll = sortData(rows);
+
+  // history：表格与图表都分页，避免 runs 很多时页面卡顿。
+  let sorted = sortedAll;
+  if (viewMode === 'runs' && view === 'history') {
+    const pageSize = getIntFromSelect('historyPageSize', 200);
+    const paged = applyPaging(sortedAll, historyPage, pageSize);
+    historyPage = paged.page;
+    sorted = paged.slice;
+    setPagerState({
+      containerId: 'historyPager',
+      textId: 'historyPagerText',
+      prevId: 'historyPrev',
+      nextId: 'historyNext',
+      pageSizeId: 'historyPageSize',
+      page: paged.page,
+      pageCount: paged.pageCount,
+      total: paged.total
+    });
+  } else {
+    const hp = document.getElementById('historyPager');
+    if (hp) hp.style.display = 'none';
+    historyPage = 1;
+  }
+
+  const cp = document.getElementById('comparePager');
+  if (cp) cp.style.display = (viewMode === 'runs' && (layoutMode === 'matrix' || view === 'compare')) ? 'flex' : 'none';
+
   renderTable(sorted);
   renderChart(sorted);
   updateHeaderIndicators();
@@ -3108,10 +3265,10 @@ function renderAll() {
     const includeHidden = !!document.getElementById('showHidden')?.checked;
     const hiddenCount = Object.keys(moderation.hidden || {}).length;
     runsHint.textContent = sig
-      ? `${t('hint_case_key')}=${caseKey} | ${caseLabel(sig)} | ${t('hint_matched_systems')}=${sorted.length}`
-      : `${t('hint_case_key')}=${caseKey} | ${t('hint_matched_systems')}=${sorted.length}`;
+      ? `${t('hint_case_key')}=${caseKey} | ${caseLabel(sig)} | ${t('hint_matched_systems')}=${sortedAll.length}`
+      : `${t('hint_case_key')}=${caseKey} | ${t('hint_matched_systems')}=${sortedAll.length}`;
     if (view === 'history') {
-      runsHint.textContent = (sig ? `${t('hint_case_key')}=${caseKey} | ${caseLabel(sig)}` : `${t('hint_case_key')}=${caseKey}`) + (sys ? ` | ${t('col_system')}=${sys}` : '') + ` | ${t('hint_runs')}=${sorted.length}`;
+      runsHint.textContent = (sig ? `${t('hint_case_key')}=${caseKey} | ${caseLabel(sig)}` : `${t('hint_case_key')}=${caseKey}`) + (sys ? ` | ${t('col_system')}=${sys}` : '') + ` | ${t('hint_runs')}=${sortedAll.length}`;
     }
     if (!includeHidden && hiddenCount > 0) {
       runsHint.textContent += ` | ${t('hidden_runs')}=${hiddenCount}`;

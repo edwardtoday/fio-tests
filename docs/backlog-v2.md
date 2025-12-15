@@ -70,5 +70,5 @@
 ## M4：规模化（目标：runs 多了仍好用）
 
 - [x] M4.0.1 data.json 索引增强（前端无需全量遍历）
-- [ ] M4.0.2 前端按需加载 run.json（点击详情才加载）
-- [ ] M4.0.3 history/compare 大表分页或虚拟列表
+- [x] M4.0.2 前端按需加载 run.json（点击详情才加载）
+- [x] M4.0.3 history/compare 大表分页或虚拟列表
