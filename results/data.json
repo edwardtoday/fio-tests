@@ -483,7 +483,7 @@
       "time_based": 1
     }
   },
-  "generated_at": "2025-12-16T02:33:39Z",
+  "generated_at": "2025-12-16T03:56:06Z",
   "legacy_rows": [
     {
       "device": "Lexar-Silver-Plus-64G",
@@ -720,7 +720,7 @@
       "seq_write_mib_s": 125.0
     },
     {
-      "device": "Toshiba-Exceria-32G",
+      "device": "Toshiba-Exceria-32G-Suspected-Bad",
       "rand_read_bw_mib": 5.7109375,
       "rand_read_iops": 1461.0,
       "rand_write_bw_mib": 0.005503654479980469,
@@ -5549,7 +5549,7 @@
       "op": "write",
       "run_id": "20251212T234014Z_ae80b01b268d395ae680_legacy_86f0a5c9",
       "size_effective_bytes": 1073741824,
-      "system": "Toshiba-Exceria-32G",
+      "system": "Toshiba-Exceria-32G-Suspected-Bad",
       "system_hash": "ae80b01b268d395ae680",
       "timestamp": "2025-12-12T23:40:14Z"
     },
@@ -5562,7 +5562,7 @@
       "op": "read",
       "run_id": "20251212T234014Z_ae80b01b268d395ae680_legacy_86f0a5c9",
       "size_effective_bytes": 1073741824,
-      "system": "Toshiba-Exceria-32G",
+      "system": "Toshiba-Exceria-32G-Suspected-Bad",
       "system_hash": "ae80b01b268d395ae680",
       "timestamp": "2025-12-12T23:40:14Z"
     },
@@ -5575,7 +5575,7 @@
       "op": "read",
       "run_id": "20251212T234014Z_ae80b01b268d395ae680_legacy_86f0a5c9",
       "size_effective_bytes": 1073741824,
-      "system": "Toshiba-Exceria-32G",
+      "system": "Toshiba-Exceria-32G-Suspected-Bad",
       "system_hash": "ae80b01b268d395ae680",
       "timestamp": "2025-12-12T23:40:14Z"
     },
@@ -5588,7 +5588,7 @@
       "op": "write",
       "run_id": "20251212T234014Z_ae80b01b268d395ae680_legacy_86f0a5c9",
       "size_effective_bytes": 1073741824,
-      "system": "Toshiba-Exceria-32G",
+      "system": "Toshiba-Exceria-32G-Suspected-Bad",
       "system_hash": "ae80b01b268d395ae680",
       "timestamp": "2025-12-12T23:40:14Z"
     },
@@ -9895,7 +9895,7 @@
       "invoked_profile": "legacy_md",
       "run_id": "20251212T234014Z_ae80b01b268d395ae680_legacy_86f0a5c9",
       "source_path": "results/runs/20251212T234014Z_ae80b01b268d395ae680_legacy_86f0a5c9.json",
-      "system": "Toshiba-Exceria-32G",
+      "system": "Toshiba-Exceria-32G-Suspected-Bad",
       "system_hash": "ae80b01b268d395ae680",
       "timestamp": "2025-12-12T23:40:14Z"
     },
@@ -10267,7 +10267,7 @@
       "latest_run_id": "20251212T234014Z_ae80b01b268d395ae680_legacy_86f0a5c9",
       "latest_timestamp": "2025-12-12T23:40:14Z",
       "run_count": 1,
-      "system": "Toshiba-Exceria-32G",
+      "system": "Toshiba-Exceria-32G-Suspected-Bad",
       "system_hash": "ae80b01b268d395ae680"
     },
     {

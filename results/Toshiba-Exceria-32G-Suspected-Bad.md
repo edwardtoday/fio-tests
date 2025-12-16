@@ -1,6 +1,8 @@
-# Toshiba-Exceria-32G 性能测试
+# Toshiba-Exceria-32G（疑似坏卡样本）性能测试
 
-介质：Toshiba Exceria 32G（SD 卡，挂载点：`/Volumes/DR-05X`）
+备注：这张卡随机写 IOPS 异常低，疑似介质故障或兼容性问题；结果仅用于展示“异常样本”，不代表该型号正常水平。
+
+介质：Toshiba Exceria 32G（SD 卡，挂载点：`/Volumes/DR-05X`；系统名：`Toshiba-Exceria-32G-Suspected-Bad`）
 
 使用脚本：`run-fio.sh`（macOS：`ioengine=posixaio`）
 
