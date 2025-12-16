@@ -1336,6 +1336,8 @@ function applyStateFromHash() {
 
   suppressHashSync = true;
   try {
+    const desiredCaseKey = String(p.case_key || '');
+
     // language
     if (p.lang && I18N[p.lang]) {
       lang = p.lang;
@@ -1396,14 +1398,19 @@ function applyStateFromHash() {
 
     // case selection (depends on rebuilt case options)
     const caseSelect = document.getElementById('caseSelect');
-    if (caseSelect && p.case_key && optExists(caseSelect, p.case_key)) {
-      caseSelect.value = p.case_key;
-    }
+    if (caseSelect && desiredCaseKey && optExists(caseSelect, desiredCaseKey)) caseSelect.value = desiredCaseKey;
 
     applyModerationView();
 
     // apply layout visibility once
     if (runsView && typeof runsView.applyLayoutMode === 'function') runsView.applyLayoutMode();
+
+    // 关键：hash 里可能同时指定 op + case_key；必须在设置完 op/filter 后重建 case 列表，否则刷新会落到错误 case。
+    if (runsView && typeof runsView.rebuildCaseOptions === 'function') {
+      runsView.rebuildCaseOptions(desiredCaseKey);
+      if (caseSelect && desiredCaseKey && optExists(caseSelect, desiredCaseKey)) caseSelect.value = desiredCaseKey;
+    }
+    if (runsView && typeof runsView.rebuildCompareOptions === 'function') runsView.rebuildCompareOptions();
 
     if (p.detail_system) {
       openSystemDetails(p.detail_system);
@@ -1969,7 +1976,8 @@ function applyModerationView() {
   const runs = includeHidden ? (runsDocRaw.runs || []) : (runsDocRaw.runs || []).filter(r => r && !hiddenIds.has(String(r.run_id)));
   const measurements = includeHidden ? (runsDocRaw.measurements || []) : (runsDocRaw.measurements || []).filter(m => m && !hiddenIds.has(String(m.run_id)));
   runsDoc = { ...runsDocRaw, runs, measurements };
-  runsView = buildRunsView(runsDoc);
+  runsView = buildRunsView(runsDoc, { bindEvents: !runsView });
+  refreshDynamicLabels();
   if (systemDetailsSystem && systemDetails?.style.display !== 'none') openSystemDetails(systemDetailsSystem);
 }
 
@@ -2510,10 +2518,11 @@ function matchesFilter(sig, key, val) {
   return String(actual) === String(val);
 }
 
-function buildRunsView(doc) {
+function buildRunsView(doc, opts = {}) {
   const caseDefs = doc.case_defs || {};
   const measurements = doc.measurements || [];
   const systems = uniqSorted(measurements.map(m => m.system));
+  const bindEvents = !(opts && opts.bindEvents === false);
 
   // 中文说明：随着 measurements 增多，渲染阶段如果每次都全量 filter/sort 会越来越慢。
   // 这里在初始化时构建索引，后续按需取子集。
@@ -2755,47 +2764,49 @@ function buildRunsView(doc) {
     normalizeSelection();
   }
 
-  [rwSelect, bsSelect, qdSelect, runtimeSelect, directSelect, fdatasyncSelect, ioengineSelect, mixSelect, sizePolicySelect].forEach(sel => {
-    sel.addEventListener('change', () => {
-      rebuildCaseOptions();
+  if (bindEvents) {
+    [rwSelect, bsSelect, qdSelect, runtimeSelect, directSelect, fdatasyncSelect, ioengineSelect, mixSelect, sizePolicySelect].forEach(sel => {
+      sel.addEventListener('change', () => {
+        rebuildCaseOptions();
+        rebuildCompareOptions();
+        renderAll();
+      });
+    });
+    caseSelect.addEventListener('change', () => {
+      normalizeSelection();
       rebuildCompareOptions();
       renderAll();
     });
-  });
-  caseSelect.addEventListener('change', () => {
-    normalizeSelection();
-    rebuildCompareOptions();
-    renderAll();
-  });
-  opSelect.addEventListener('change', () => {
-    const preferred = swapCaseKeyForOp(caseSelect.value, opSelect.value);
-    rebuildCaseOptions(preferred);
-    rebuildCompareOptions();
-    renderAll();
-  });
-  viewSelect.addEventListener('change', () => {
-    // history/compare 模式下没有 “latestOnly” 的意义，强制展示全量历史
-    const latestOnly = document.getElementById('latestOnly');
-    if (viewSelect.value === 'history') latestOnly.checked = false;
-    if (viewSelect.value === 'compare') latestOnly.checked = false;
-    if (viewSelect.value === 'history') historyPage = 1;
-    if (viewSelect.value === 'compare') comparePage = 1;
-    // op=auto 仅用于 compare；离开 compare 时回到 read，避免普通 case 比较出现空表
-    if (viewSelect.value !== 'compare' && opSelect.value === 'auto') opSelect.value = 'read';
-    compareControls.style.display = (viewSelect.value === 'compare') ? 'block' : 'none';
-    rebuildCompareOptions();
-    renderAll();
-  });
-  systemSelect.addEventListener('change', renderAll);
-  document.getElementById('metricSelect').addEventListener('change', renderAll);
-  document.getElementById('latestOnly').addEventListener('change', renderAll);
-
-  [compareGroupBy, compareSystems, compareCases, compareMetrics].forEach(sel => {
-    sel.addEventListener('change', () => {
-      comparePage = 1;
+    opSelect.addEventListener('change', () => {
+      const preferred = swapCaseKeyForOp(caseSelect.value, opSelect.value);
+      rebuildCaseOptions(preferred);
+      rebuildCompareOptions();
       renderAll();
     });
-  });
+    viewSelect.addEventListener('change', () => {
+      // history/compare 模式下没有 “latestOnly” 的意义，强制展示全量历史
+      const latestOnly = document.getElementById('latestOnly');
+      if (viewSelect.value === 'history') latestOnly.checked = false;
+      if (viewSelect.value === 'compare') latestOnly.checked = false;
+      if (viewSelect.value === 'history') historyPage = 1;
+      if (viewSelect.value === 'compare') comparePage = 1;
+      // op=auto 仅用于 compare；离开 compare 时回到 read，避免普通 case 比较出现空表
+      if (viewSelect.value !== 'compare' && opSelect.value === 'auto') opSelect.value = 'read';
+      compareControls.style.display = (viewSelect.value === 'compare') ? 'block' : 'none';
+      rebuildCompareOptions();
+      renderAll();
+    });
+    systemSelect.addEventListener('change', renderAll);
+    document.getElementById('metricSelect').addEventListener('change', renderAll);
+    document.getElementById('latestOnly').addEventListener('change', renderAll);
+
+    [compareGroupBy, compareSystems, compareCases, compareMetrics].forEach(sel => {
+      sel.addEventListener('change', () => {
+        comparePage = 1;
+        renderAll();
+      });
+    });
+  }
 
   rebuildCaseOptions();
   rebuildCompareOptions();
@@ -2899,20 +2910,22 @@ function buildRunsView(doc) {
   rebuildScoreboardPresets();
   applyLayoutMode();
 
-  layoutSelect.addEventListener('change', () => {
-    layoutMode = layoutSelect.value;
-    if (layoutMode === 'matrix') {
-      viewSelect.value = 'compare';
-      compareGroupBy.value = 'metric';
-      document.getElementById('latestOnly').checked = false;
-    } else if (layoutMode === 'scoreboard') {
-      viewSelect.value = 'by_system';
-      document.getElementById('latestOnly').checked = true;
-    }
-    applyLayoutMode();
-    rebuildCompareOptions();
-    renderAll();
-  });
+  if (bindEvents) {
+    layoutSelect.addEventListener('change', () => {
+      layoutMode = layoutSelect.value;
+      if (layoutMode === 'matrix') {
+        viewSelect.value = 'compare';
+        compareGroupBy.value = 'metric';
+        document.getElementById('latestOnly').checked = false;
+      } else if (layoutMode === 'scoreboard') {
+        viewSelect.value = 'by_system';
+        document.getElementById('latestOnly').checked = true;
+      }
+      applyLayoutMode();
+      rebuildCompareOptions();
+      renderAll();
+    });
+  }
 
   return {
     caseDefs,
@@ -2921,6 +2934,8 @@ function buildRunsView(doc) {
     measurementsBySystem,
     measurementsByCaseOp,
     caseOps,
+    rebuildCaseOptions,
+    rebuildCompareOptions,
     rebuildScoreboardPresets,
     applyLayoutMode
   };
