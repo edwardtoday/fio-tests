@@ -1,0 +1,947 @@
+{
+  "cases": [
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 120,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "3b38608221fcda5bc9e3",
+      "fio_json_path": "fio-randwrite-4k-qd1.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 28.55840015411377,
+          "clat_p95_ms": 0.066048,
+          "clat_p99_ms": 0.272384,
+          "iops": 7310.95056
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 120,
+        "rw": "randread",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "2bf9514f9907bd11ca1f",
+      "fio_json_path": "fio-randread-4k-qd1.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 1.4083747863769531,
+          "clat_p95_ms": 8.978432,
+          "clat_p99_ms": 18.481152,
+          "iops": 360.543991
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "aee07b58f10c79d510da",
+      "fio_json_path": "fio-randwrite-4k-qd4.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 43.13998508453369,
+          "clat_p95_ms": 0.132096,
+          "clat_p99_ms": 0.305152,
+          "iops": 11043.836187
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randread",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "a9ee22014b373ef09b11",
+      "fio_json_path": "fio-randread-4k-qd4.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 14.738802909851074,
+          "clat_p95_ms": 7.569408,
+          "clat_p99_ms": 14.352384,
+          "iops": 3773.133682
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 16,
+        "runtime_s": 120,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "3464df86bdd49e13e068",
+      "fio_json_path": "fio-randwrite-4k-qd16.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 65.05203437805176,
+          "clat_p95_ms": 0.242688,
+          "clat_p99_ms": 36.438016,
+          "iops": 16653.321012
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 16,
+        "runtime_s": 120,
+        "rw": "randread",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "c152618575d7aaa04d9b",
+      "fio_json_path": "fio-randread-4k-qd16.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 322.5030736923218,
+          "clat_p95_ms": 0.218112,
+          "clat_p99_ms": 0.264192,
+          "iops": 82560.786993
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 32,
+        "runtime_s": 120,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "08c10d41720e8dba2f78",
+      "fio_json_path": "fio-randwrite-4k-qd32.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 59.46559143066406,
+          "clat_p95_ms": 0.428032,
+          "clat_p99_ms": 76.02176,
+          "iops": 15223.191542
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 32,
+        "runtime_s": 120,
+        "rw": "randread",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "18d4c5c712cab3726e8c",
+      "fio_json_path": "fio-randread-4k-qd32.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 360.6130428314209,
+          "clat_p95_ms": 0.428032,
+          "clat_p99_ms": 0.48128,
+          "iops": 92316.939026
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 120,
+        "rw": "randrw",
+        "rwmixread": 70,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "fd8d2715e2c7a176a825",
+      "fio_json_path": "fio-randrw70-4k-qd1.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 27.97196674346924,
+          "clat_p95_ms": 0.045824,
+          "clat_p99_ms": 0.095744,
+          "iops": 7160.82366
+        },
+        "write": {
+          "bw_mib_s": 11.993193626403809,
+          "clat_p95_ms": 0.054016,
+          "clat_p99_ms": 0.09984,
+          "iops": 3070.257748
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randrw",
+        "rwmixread": 70,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "423fae4ccccf6745c2ba",
+      "fio_json_path": "fio-randrw70-4k-qd4.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 48.38680362701416,
+          "clat_p95_ms": 0.101888,
+          "clat_p99_ms": 0.236544,
+          "iops": 12387.021775
+        },
+        "write": {
+          "bw_mib_s": 20.7526912689209,
+          "clat_p95_ms": 0.119296,
+          "clat_p99_ms": 0.216064,
+          "iops": 5312.689061
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "128k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "read",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "0fbcd802dddfc387972c",
+      "fio_json_path": "fio-seq-read-128k.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 5325.376868247986,
+          "clat_p95_ms": 1.482752,
+          "clat_p99_ms": 1.531904,
+          "iops": 42603.01495
+        }
+      },
+      "size_effective_bytes": null
+    },
+    {
+      "case": {
+        "bs": "128k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "write",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "c4cdaaed70b4d6f970e7",
+      "fio_json_path": "fio-seq-write-128k.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 722.3066921234131,
+          "clat_p95_ms": 41.680896,
+          "clat_p99_ms": 110.624768,
+          "iops": 5778.45354
+        }
+      },
+      "size_effective_bytes": null
+    },
+    {
+      "case": {
+        "bs": "1M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "read",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "a34a913bed6fabafe3b1",
+      "fio_json_path": "fio-seq-read-1m.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 5572.00946521759,
+          "clat_p95_ms": 11.599872,
+          "clat_p99_ms": 11.599872,
+          "iops": 5572.009466
+        }
+      },
+      "size_effective_bytes": null
+    },
+    {
+      "case": {
+        "bs": "1M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "write",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "4dcb4b1ee819606a3134",
+      "fio_json_path": "fio-seq-write-1m.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 6000.958005905151,
+          "clat_p95_ms": 15.925248,
+          "clat_p99_ms": 76.02176,
+          "iops": 6000.958006
+        }
+      },
+      "size_effective_bytes": null
+    },
+    {
+      "case": {
+        "bs": "4M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "read",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "baff7fc01b735b92c2ae",
+      "fio_json_path": "fio-seq-read-4m.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 5592.99409198761,
+          "clat_p95_ms": 45.350912,
+          "clat_p99_ms": 45.350912,
+          "iops": 1398.248523
+        }
+      },
+      "size_effective_bytes": null
+    },
+    {
+      "case": {
+        "bs": "4M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": 120,
+        "rw": "write",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "63fddef05ed6987a1898",
+      "fio_json_path": "fio-seq-write-4m.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 6228.888054847717,
+          "clat_p95_ms": 77.070336,
+          "clat_p99_ms": 133.69344,
+          "iops": 1557.222014
+        }
+      },
+      "size_effective_bytes": null
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 180,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "7d357dbd5b182ee17b06",
+      "fio_json_path": "fio-sustained-randwrite-4k-qd4-3m.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 24.964890480041504,
+          "clat_p95_ms": 0.128512,
+          "clat_p99_ms": 0.268288,
+          "iops": 6391.01201
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "1M",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 64,
+        "runtime_s": null,
+        "rw": "write",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 17179869184,
+          "mode": "fixed_or_pct_free",
+          "pct_free": 60
+        },
+        "time_based": 0
+      },
+      "case_key": "bb416fb7632b3461bb62",
+      "fio_json_path": "fio-sustained-write-1m.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 870.933445930481,
+          "clat_p95_ms": 149.946368,
+          "clat_p99_ms": 252.706816,
+          "iops": 870.933447
+        }
+      },
+      "size_effective_bytes": 17179869184
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 600,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 4294967296,
+          "mode": "min_fixed_or_pct_free",
+          "pct_free": 60
+        },
+        "time_based": 1
+      },
+      "case_key": "21536cd514a14d4112c9",
+      "fio_json_path": "fio-sustained-randwrite-4k-qd4-10m.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 10.43741512298584,
+          "clat_p95_ms": 4.42368,
+          "clat_p99_ms": 15.532032,
+          "iops": 2671.978307
+        }
+      },
+      "size_effective_bytes": 4294967296
+    },
+    {
+      "case": {
+        "bs": "8k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 120,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "9c68d46afa8c45ad8bc6",
+      "fio_json_path": "fio-dblike-randwrite-8k-qd1.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 54.391478538513184,
+          "clat_p95_ms": 0.073216,
+          "clat_p99_ms": 0.268288,
+          "iops": 6962.109281
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "8k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 120,
+        "rw": "randread",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "97c7645cdd057650f626",
+      "fio_json_path": "fio-dblike-randread-8k-qd1.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 3.063960075378418,
+          "clat_p95_ms": 8.84736,
+          "clat_p99_ms": 15.925248,
+          "iops": 392.186927
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "8k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "cde9a9be595aeac067ab",
+      "fio_json_path": "fio-dblike-randwrite-8k-qd4.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 94.2090835571289,
+          "clat_p95_ms": 0.150528,
+          "clat_p99_ms": 0.313344,
+          "iops": 12058.762766
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "8k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randread",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "c0f4d541d3c9904f483b",
+      "fio_json_path": "fio-dblike-randread-8k-qd4.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 69.1869421005249,
+          "clat_p95_ms": 1.810432,
+          "clat_p99_ms": 9.240576,
+          "iops": 8855.928673
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "16k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 120,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "c455095ec5d74ef3c0d1",
+      "fio_json_path": "fio-dblike-randwrite-16k-qd1.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 133.61828708648682,
+          "clat_p95_ms": 0.059648,
+          "clat_p99_ms": 0.181248,
+          "iops": 8551.570404
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "16k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 120,
+        "rw": "randread",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "9bbceae350a7dc056bce",
+      "fio_json_path": "fio-dblike-randread-16k-qd1.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 252.63005542755127,
+          "clat_p95_ms": 0.045312,
+          "clat_p99_ms": 0.081408,
+          "iops": 16168.323597
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "16k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randwrite",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "e1a249138d9f14607f4c",
+      "fio_json_path": "fio-dblike-randwrite-16k-qd4.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "write": {
+          "bw_mib_s": 195.30852794647217,
+          "clat_p95_ms": 0.187392,
+          "clat_p99_ms": 0.333824,
+          "iops": 12499.745835
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "16k",
+        "direct": 1,
+        "fdatasync": 0,
+        "ioengine": "native_aio",
+        "numjobs": 1,
+        "qd": 4,
+        "runtime_s": 120,
+        "rw": "randread",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "b67946a3bbe15a2e8a20",
+      "fio_json_path": "fio-dblike-randread-16k-qd4.fio.json",
+      "ioengine_raw": "libaio",
+      "ops": {
+        "read": {
+          "bw_mib_s": 815.9322624206543,
+          "clat_p95_ms": 0.093696,
+          "clat_p99_ms": 0.132096,
+          "iops": 52219.664836
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "4k",
+        "direct": 0,
+        "fdatasync": 1,
+        "ioengine": "sync",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 60,
+        "rw": "write",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "7c6478eec6aa43bb0edd",
+      "fio_json_path": "fio-dblike-fdatasync-write-4k-qd1.fio.json",
+      "ioengine_raw": "sync",
+      "ops": {
+        "write": {
+          "bw_mib_s": 92.30718517303467,
+          "clat_p95_ms": 0.005728,
+          "clat_p99_ms": 0.006752,
+          "iops": 23630.639489
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "8k",
+        "direct": 0,
+        "fdatasync": 1,
+        "ioengine": "sync",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 60,
+        "rw": "write",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "8e42a113b252141d1298",
+      "fio_json_path": "fio-dblike-fdatasync-write-8k-qd1.fio.json",
+      "ioengine_raw": "sync",
+      "ops": {
+        "write": {
+          "bw_mib_s": 162.34455966949463,
+          "clat_p95_ms": 0.007968,
+          "clat_p99_ms": 0.011328,
+          "iops": 20780.103665
+        }
+      },
+      "size_effective_bytes": 1073741824
+    },
+    {
+      "case": {
+        "bs": "16k",
+        "direct": 0,
+        "fdatasync": 1,
+        "ioengine": "sync",
+        "numjobs": 1,
+        "qd": 1,
+        "runtime_s": 60,
+        "rw": "write",
+        "rwmixread": null,
+        "size_policy": {
+          "fixed_bytes": 1073741824,
+          "mode": "fixed"
+        },
+        "time_based": 1
+      },
+      "case_key": "bccfe31a763d702881e3",
+      "fio_json_path": "fio-dblike-fdatasync-write-16k-qd1.fio.json",
+      "ioengine_raw": "sync",
+      "ops": {
+        "write": {
+          "bw_mib_s": 265.69713401794434,
+          "clat_p95_ms": 0.012608,
+          "clat_p99_ms": 0.019072,
+          "iops": 17004.61659
+        }
+      },
+      "size_effective_bytes": 1073741824
+    }
+  ],
+  "mode": "update",
+  "repo": "edwardtoday/fio-tests",
+  "run": {
+    "engine": "libaio",
+    "invoked_profile": "full",
+    "meta": {
+      "fio_version": "fio-3.36",
+      "hostname": "ccc",
+      "machine": "x86_64",
+      "os_pretty_name": "Ubuntu 24.04.3 LTS",
+      "platform": "Linux",
+      "platform_release": "6.8.0-90-generic",
+      "platform_version": "#91-Ubuntu SMP PREEMPT_DYNAMIC Tue Nov 18 14:14:30 UTC 2025",
+      "python_version": "3.12.3",
+      "target_fs": {
+        "device": "/dev/mapper/data--vg-rs--files",
+        "fstype": "ext4",
+        "mountpoint": "/srv/resourcespace-files"
+      },
+      "target_realpath": "/srv/resourcespace-files"
+    },
+    "out_dir": ".",
+    "run_id": "20260113T125849Z_527d909cfc4f10c7bdfe",
+    "system": "R740XD 16T*6 RAID6",
+    "system_hash": "527d909cfc4f10c7bdfe",
+    "target_dir": ".",
+    "timestamp": "2026-01-13T12:58:49Z",
+    "timestamp_compact": "20260113T125849Z"
+  }
+}
